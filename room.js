@@ -57,11 +57,31 @@ onSnapshot(collection(db,"rooms",roomId,"players"), async snap=>{
   document.getElementById("players").innerHTML=html;
 
   // ====== JIKA SEMUA READY → BAGI KARTU ======
-  if(allReady){
-    const roomSnap = await getDoc(doc(db,"rooms",roomId));
-    const room = roomSnap.data();
+  // ===== START GAME SAAT SEMUA READY =====
+if(allReady){
+  const roomSnap = await getDoc(roomRef);
+  const room = roomSnap.data();
 
-    if(!room.deck){ // biar cuma sekali
+  if(room.gameStarted) return; // ⛔ sudah mulai, hentikan
+
+  // tandai game mulai dulu
+  await updateDoc(roomRef,{ gameStarted:true });
+
+  let deck = buatDeck();
+
+  // bagikan 1 kartu ke tiap pemain
+  for(let p of players){
+    let card = deck.pop();
+    await updateDoc(doc(db,"rooms",roomId,"players",p.id),{
+      cards:[card]
+    });
+  }
+
+  // simpan sisa deck
+  await updateDoc(roomRef,{ deck:deck });
+
+  console.log("Game dimulai, kartu dibagikan");
+} // biar cuma sekali
       let deck = buatDeck();
 
       await updateDoc(roomRef,{deck:deck});
