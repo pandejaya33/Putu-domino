@@ -1,0 +1,29 @@
+body {
+  font-family: Arial;
+  text-align: center;
+}
+
+.card {
+  width: 60px;
+  height: 100px;
+  background: white;
+  border: 2px solid black;
+  border-radius: 8px;
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 6px;
+  margin: 5px;
+  font-weight: bold;
+  font-size: 20px;
+  animation: deal 0.4s ease;
+}
+
+.card .half {
+  text-align: center;
+}
+
+@keyframes deal {
+  from { transform: translateY(-20px) scale(0.8); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
