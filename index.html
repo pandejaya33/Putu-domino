@@ -12,28 +12,39 @@
 
   <button onclick="createRoom('spirit')">Mode Spirit</button>
   <button onclick="createRoom('brerong')">Mode Brerong</button>
+  <br><br>
+<label>Jumlah Bot:</label>
+<select id="botCount">
+  <option value="0">0</option>
+  <option value="1">1</option>
+  <option value="2">2</option>
+  <option value="3">3</option>
+</select>
 
   <script type="module">
     import { db } from "./firebase.js";
     import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     window.createRoom = async function(mode){
-      const name = document.getElementById("name").value;
-      if(!name) return alert("Masukkan nama");
+  const name = document.getElementById("name").value;
+  const botCount = parseInt(document.getElementById("botCount").value);
 
-      const roomId = Math.random().toString(36).substring(2,7);
+  if(!name) return alert("Masukkan nama");
 
-      localStorage.setItem("playerName", name);
-      localStorage.setItem("roomId", roomId);
-      localStorage.setItem("mode", mode);
+  const roomId = Math.random().toString(36).substring(2,7);
 
-      await setDoc(doc(db,"rooms",roomId),{
-        mode: mode,
-        status: "waiting"
-      });
+  localStorage.setItem("playerName", name);
+  localStorage.setItem("roomId", roomId);
+  localStorage.setItem("mode", mode);
 
-      window.location = "room.html";
-    }
+  await setDoc(doc(db,"rooms",roomId),{
+    mode: mode,
+    status: "waiting",
+    botCount: botCount
+  });
+
+  window.location = "room.html";
+}
   </script>
 </body>
 </html>
