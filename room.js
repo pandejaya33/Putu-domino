@@ -1,5 +1,5 @@
 import { db } from "./firebase.js";
-import { doc, setDoc, updateDoc, onSnapshot, collection } 
+import { doc, setDoc, updateDoc, onSnapshot, collection, getDoc } 
 from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { buatDeck, hitungPoint } from "./game.js";
 
@@ -9,11 +9,14 @@ document.getElementById("roomCode").innerText = roomId;
 
 const playerId = Date.now().toString();
 
+// ================= PEMAIN MASUK =================
 await setDoc(doc(db,"rooms",roomId,"players",playerId),{
   name:name,
   ready:false,
   cards:[]
 });
+
+// ================= BUAT BOT =================
 const roomRef = doc(db,"rooms",roomId);
 
 onSnapshot(roomRef, async (roomSnap)=>{
@@ -33,29 +36,44 @@ onSnapshot(roomRef, async (roomSnap)=>{
   }
 });
 
-
+// ================= TOMBOL READY =================
 window.readyUp = async function(){
   await updateDoc(doc(db,"rooms",roomId,"players",playerId),{ready:true});
 }
 
-onSnapshot(collection(db,"rooms",roomId,"players"), snap=>{
+// ================= LIST PEMAIN + CEK START GAME =================
+onSnapshot(collection(db,"rooms",roomId,"players"), async snap=>{
   let html="";
-  snap.forEach(doc=>{
-    const p=doc.data();
-    html+=`<div>${p.name} ${p.ready?"✅":"⏳"}</div>`;
-  });
-  document.getElementById("players").innerHTML=html;
-});
+  let players=[];
+  let allReady=true;
+
   snap.forEach(docSnap=>{
-    const p = docSnap.data();
-    if(p.isBot){
-      setTimeout(()=>{
-        let point = hitungPoint(p.cards || []);
-        if(point < 6){
-          console.log(p.name+" ambil kartu");
-        } else {
-          console.log(p.name+" stop");
-        }
-      },1500);
-    }
+    const p=docSnap.data();
+    players.push({id:docSnap.id, ...p});
+    html+=`<div>${p.name} ${p.ready?"✅":"⏳"}</div>`;
+    if(!p.ready) allReady=false;
   });
+
+  document.getElementById("players").innerHTML=html;
+
+  // ====== JIKA SEMUA READY → BAGI KARTU ======
+  if(allReady){
+    const roomSnap = await getDoc(doc(db,"rooms",roomId));
+    const room = roomSnap.data();
+
+    if(!room.deck){ // biar cuma sekali
+      let deck = buatDeck();
+
+      await updateDoc(roomRef,{deck:deck});
+
+      for(let p of players){
+        let card = deck.pop();
+        await updateDoc(doc(db,"rooms",roomId,"players",p.id),{
+          cards:[card]
+        });
+      }
+
+      console.log("Kartu pertama sudah dibagikan");
+    }
+  }
+});
