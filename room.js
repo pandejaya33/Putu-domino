@@ -22,14 +22,6 @@ window.readyUp = async function(){
   await updateDoc(doc(db,"rooms",roomId,"players",playerId),{ready:true});
 }
 
-// ================= LISTENER UTAMA GAME =================
-onSnapshot(roomRef, async (roomSnap)=>{
-  const room = roomSnap.data();
-  if(!room) return;
-
-  const playersSnap = await getDoc(roomRef);
-});
-
 // ================= LIST PEMAIN + LOGIKA GAME =================
 onSnapshot(collection(db,"rooms",roomId,"players"), async snap=>{
   let html="";
