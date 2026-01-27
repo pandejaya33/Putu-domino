@@ -1,19 +1,38 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8" />
   <title>Room Domino</title>
-  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 </head>
-<body>
 
-<h2>Room: <span id="roomCode"></span></h2>
-<div id="players"></div>
+<body style="font-family:sans-serif; text-align:center; background:#0f172a; color:white;">
 
-<button onclick="readyUp()">READY</button>
+  <h2>Room Code: <span id="roomCode"></span></h2>
+
+  <h3>Daftar Pemain</h3>
+  <div id="players" style="margin-bottom:20px;"></div>
+
+  <button onclick="readyUp()" style="padding:10px 20px; font-size:16px;">
+    READY
+  </button>
+
+  <hr style="margin:25px 0;">
+
   <h3>Kartu Saya:</h3>
-<div id="myCards" style="margin-top:10px;"></div>
-<div id="cards"></div>
+  <div id="myCards" style="margin-top:10px;"></div>
 
-<script type="module" src="room.js"></script>
+  <div style="margin-top:20px;">
+    <button id="drawBtn" onclick="drawCard()" style="display:none; padding:10px 15px;">
+      Ambil Kartu
+    </button>
+
+    <button id="passBtn" onclick="passTurn()" style="display:none; padding:10px 15px;">
+      Tidak Ambil
+    </button>
+  </div>
+
+  <script type="module" src="room.js"></script>
+
 </body>
 </html>
