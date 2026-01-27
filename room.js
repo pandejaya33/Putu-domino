@@ -1,7 +1,7 @@
 import { db } from "./firebase.js";
 import { doc,setDoc,updateDoc,getDoc,getDocs,onSnapshot,collection }
 from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { buatDeck,hitungSpirit,semuaSelesaiSpirit,semuaSelesaiBrerong } from "./game.js";
+import { buatDeck } from "./game.js";
 
 const roomId=localStorage.getItem("roomId");
 const name=localStorage.getItem("playerName");
@@ -41,7 +41,7 @@ function tampilPemain(){
   let html="";
   snap.forEach(d=>{
    let p=d.data();
-   html+=`<div>${p.name} | Kartu:${p.cards.length} | Skor:${p.score||0}</div>`;
+   html+=`<div>${p.name} | Kartu:${p.cards.length}</div>`;
   });
   players.innerHTML=html;
  });
@@ -114,20 +114,5 @@ async function nextTurn(deck){
  let next=ids[(ids.indexOf(r.data().turn)+1)%ids.length];
 
  await updateDoc(roomRef,{turn:next,deck});
- cekPemenang(playersData);
 }
 
-async function cekPemenang(players){
- if(mode==="spirit" && !semuaSelesaiSpirit(players)) return;
- if(mode==="brerong" && !semuaSelesaiBrerong(players)) return;
-
- let best=-1,winnerIndex=-1;
- players.forEach((p,i)=>{
-  let pt=hitungSpirit(p.cards);
-  if(pt>best){best=pt;winnerIndex=i;}
- });
-
- if(winnerIndex>=0){
-  winnerText.innerText="Pemenang ditemukan!";
- }
-}
