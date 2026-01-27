@@ -1,105 +1,107 @@
 import { db } from "./firebase.js";
-import { doc, setDoc, updateDoc, onSnapshot, collection, getDoc } 
-from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import {
+  doc, setDoc, updateDoc, onSnapshot, collection, getDoc
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { buatDeck } from "./game.js";
 
 const roomId = localStorage.getItem("roomId");
 const name = localStorage.getItem("playerName");
+const playerId = Date.now().toString();
+const roomRef = doc(db, "rooms", roomId);
+
 document.getElementById("roomCode").innerText = roomId;
 
-const playerId = Date.now().toString();
-const roomRef = doc(db,"rooms",roomId);
+start();
 
-startGame(); // ⬅️ PENTING
+async function start() {
 
-// ================== SEMUA KODE JALAN DI SINI ==================
-async function startGame(){
-
-  // MASUKKAN PLAYER
-  await setDoc(doc(db,"rooms",roomId,"players",playerId),{
-    name:name,
-    ready:false,
-    cards:[]
+  // ========= MASUKKAN PLAYER =========
+  await setDoc(doc(db, "rooms", roomId, "players", playerId), {
+    name: name,
+    ready: false,
+    cards: []
   });
 
-  // TOMBOL READY
-  window.readyUp = async function(){
-    await updateDoc(doc(db,"rooms",roomId,"players",playerId),{ready:true});
-  }
+  // ========= TOMBOL READY =========
+  window.readyUp = async function () {
+    await updateDoc(doc(db, "rooms", roomId, "players", playerId), {
+      ready: true
+    });
+  };
 
-  // LISTENER PEMAIN + LOGIKA GAME
-  onSnapshot(collection(db,"rooms",roomId,"players"), async snap=>{
-    let html="";
-    let players=[];
-    let allReady=true;
+  // ========= LIST PEMAIN + GAME FLOW =========
+  onSnapshot(collection(db, "rooms", roomId, "players"), async snap => {
+    let players = [];
+    let allReady = true;
+    let html = "";
 
-    snap.forEach(docSnap=>{
-      const p=docSnap.data();
-      players.push({id:docSnap.id, ...p});
-      html+=`<div>${p.name} ${p.ready?"✅":"⏳"}</div>`;
-      if(!p.ready) allReady=false;
+    snap.forEach(d => {
+      const p = d.data();
+      players.push({ id: d.id, ...p });
+      html += `<div>${p.name} ${p.ready ? "✅" : "⏳"}</div>`;
+      if (!p.ready) allReady = false;
     });
 
-    document.getElementById("players").innerHTML=html;
+    document.getElementById("players").innerHTML = html;
 
     const roomSnap = await getDoc(roomRef);
-    const room = roomSnap.data();
+    const room = roomSnap.data() || {};
 
-    // BUAT BOT
-    if(room.botCount && !room.botsCreated){
-      for(let i=1;i<=room.botCount;i++){
-        await setDoc(doc(db,"rooms",roomId,"players","bot"+i),{
-          name:"Bot "+i,
-          ready:true,
-          isBot:true,
-          cards:[]
+    // ========= BUAT BOT =========
+    if (room.botCount && !room.botsCreated) {
+      for (let i = 1; i <= room.botCount; i++) {
+        await setDoc(doc(db, "rooms", roomId, "players", "bot" + i), {
+          name: "Bot " + i,
+          ready: true,
+          isBot: true,
+          cards: []
         });
       }
-      await updateDoc(roomRef,{botsCreated:true});
+      await updateDoc(roomRef, { botsCreated: true });
       return;
     }
 
-    // START GAME
-    if(allReady && !room.gameStarted){
-      await updateDoc(roomRef,{gameStarted:true});
+    // ========= START GAME =========
+    if (allReady && !room.gameStarted) {
+      await updateDoc(roomRef, { gameStarted: true });
 
       let deck = buatDeck();
 
-      for(let p of players){
+      for (let p of players) {
         let card = deck.pop();
-        await updateDoc(doc(db,"rooms",roomId,"players",p.id),{
-          cards:[card]
+        await updateDoc(doc(db, "rooms", roomId, "players", p.id), {
+          cards: [card]
         });
       }
 
-      await updateDoc(roomRef,{deck:deck});
+      await updateDoc(roomRef, { deck: deck });
       console.log("Game dimulai");
     }
   });
 
-}
-// ===== TAMPILKAN KARTU PEMAIN =====
-onSnapshot(doc(db,"rooms",roomId,"players",playerId), (docSnap)=>{
-  const data = docSnap.data();
-  if(!data || !data.cards) return;
+  // ========= TAMPILKAN KARTU PEMAIN =========
+  onSnapshot(doc(db, "rooms", roomId, "players", playerId), docSnap => {
+    const data = docSnap.data();
+    if (!data || !data.cards) return;
 
-  let html="";
-  data.cards.forEach(c=>{
-    html+=`
-      <div style="
-        display:inline-block;
-        padding:12px;
-        margin:6px;
-        border-radius:8px;
-        background:white;
-        color:black;
-        font-weight:bold;
-        min-width:50px;
-        text-align:center;">
-        ${c[0]} | ${c[1]}
-      </div>
-    `;
+    let html = "";
+    data.cards.forEach(c => {
+      html += `
+        <div style="
+          display:inline-block;
+          padding:12px;
+          margin:6px;
+          border-radius:8px;
+          background:white;
+          color:black;
+          font-weight:bold;
+          min-width:50px;
+          text-align:center;">
+          ${c[0]} | ${c[1]}
+        </div>
+      `;
+    });
+
+    document.getElementById("myCards").innerHTML = html;
   });
-
-  document.getElementById("myCards").innerHTML = html;
-});
+}
