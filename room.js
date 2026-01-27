@@ -45,7 +45,12 @@ function tampilPemain(){
   let html="";
   snap.forEach(d=>{
    let p=d.data();
-   html+=`<div>${p.name} | Kartu:${p.cards.length} | Skor:${p.score||0}</div>`;
+   html+=`
+   <div class="playerBox">
+     <div><b>${p.name}</b></div>
+     <div>Kartu: ${p.cards.length}</div>
+     <div>Skor: ${p.score||0}</div>
+   </div>`;
   });
   players.innerHTML=html;
  });
@@ -55,9 +60,11 @@ function tampilKartu(){
  onSnapshot(doc(db,"rooms",roomId,"players",playerId),snap=>{
   let html="";
   snap.data()?.cards.forEach(c=>{
-   html+=`<div style="display:inline-block;background:white;color:black;
-   padding:16px;margin:6px;border-radius:12px;font-weight:bold;">
-   ${c.left} | ${c.right}</div>`;
+   html+=`
+   <div class="domino">
+     <div>${c.left}</div>
+     <div>${c.right}</div>
+   </div>`;
   });
   myCards.innerHTML=html;
  });
