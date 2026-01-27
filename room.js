@@ -69,9 +69,9 @@ async function start() {
 
       for (let p of players) {
         let card = deck.pop();
-        await updateDoc(doc(db, "rooms", roomId, "players", p.id), {
-          cards: [card]
-        });
+await updateDoc(doc(db,"rooms",roomId,"players",p.id),{
+  cards:[{left: card[0], right: card[1]}]
+});
       }
 
       await updateDoc(roomRef, { deck: deck });
@@ -97,7 +97,7 @@ async function start() {
           font-weight:bold;
           min-width:50px;
           text-align:center;">
-          ${c[0]} | ${c[1]}
+          ${c.left} | ${c.right}
         </div>
       `;
     });
