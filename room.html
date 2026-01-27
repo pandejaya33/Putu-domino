@@ -1,38 +1,29 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8" />
-  <title>Room Domino</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Domino Room</title>
 </head>
 
-<body style="font-family:sans-serif; text-align:center; background:#0f172a; color:white;">
+<body style="background:#0f172a;color:white;font-family:sans-serif;text-align:center">
 
-  <h2>Room Code: <span id="roomCode"></span></h2>
+<h2>Room: <span id="roomCode"></span></h2>
 
-  <h3>Daftar Pemain</h3>
-  <div id="players" style="margin-bottom:20px;"></div>
+<h3>Pemain</h3>
+<div id="players"></div>
 
-  <button onclick="readyUp()" style="padding:10px 20px; font-size:16px;">
-    READY
-  </button>
+<button onclick="readyUp()">READY</button>
 
-  <hr style="margin:25px 0;">
+<hr>
 
-  <h3>Kartu Saya:</h3>
-  <div id="myCards" style="margin-top:10px;"></div>
+<h3>Kartu Saya</h3>
+<div id="myCards"></div>
 
-  <div style="margin-top:20px;">
-    <button id="drawBtn" onclick="drawCard()" style="display:none; padding:10px 15px;">
-      Ambil Kartu
-    </button>
+<div style="margin-top:20px">
+  <button id="drawBtn" onclick="drawCard()" style="display:none">Ambil Kartu</button>
+  <button id="passBtn" onclick="passTurn()" style="display:none">Lewati</button>
+</div>
 
-    <button id="passBtn" onclick="passTurn()" style="display:none; padding:10px 15px;">
-      Tidak Ambil
-    </button>
-  </div>
-
-  <script type="module" src="room.js"></script>
-
+<script type="module" src="room.js"></script>
 </body>
 </html>
