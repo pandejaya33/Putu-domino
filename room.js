@@ -78,3 +78,28 @@ async function startGame(){
   });
 
 }
+// ===== TAMPILKAN KARTU PEMAIN =====
+onSnapshot(doc(db,"rooms",roomId,"players",playerId), (docSnap)=>{
+  const data = docSnap.data();
+  if(!data || !data.cards) return;
+
+  let html="";
+  data.cards.forEach(c=>{
+    html+=`
+      <div style="
+        display:inline-block;
+        padding:12px;
+        margin:6px;
+        border-radius:8px;
+        background:white;
+        color:black;
+        font-weight:bold;
+        min-width:50px;
+        text-align:center;">
+        ${c[0]} | ${c[1]}
+      </div>
+    `;
+  });
+
+  document.getElementById("myCards").innerHTML = html;
+});
