@@ -1,28 +1,30 @@
 <!DOCTYPE html>
 <html>
 <head>
+<meta charset="UTF-8" />
+<title>Room Domino</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Domino Room</title>
 </head>
 
-<body style="background:#0f172a;color:white;font-family:sans-serif;text-align:center">
+<body style="font-family:sans-serif;text-align:center;background:#065f46;color:white;">
 
 <h2>Room: <span id="roomCode"></span></h2>
+<h3 id="modeText"></h3>
 
-<h3>Pemain</h3>
 <div id="players"></div>
 
 <button onclick="readyUp()">READY</button>
+<button onclick="restartGame()">MAIN LAGI</button>
 
 <hr>
 
 <h3>Kartu Saya</h3>
 <div id="myCards"></div>
 
-<div style="margin-top:20px">
-  <button id="drawBtn" onclick="drawCard()" style="display:none">Ambil Kartu</button>
-  <button id="passBtn" onclick="passTurn()" style="display:none">Lewati</button>
-</div>
+<button id="drawBtn" onclick="drawCard()">Ambil</button>
+<button id="passBtn" onclick="passTurn()">Lewati</button>
+
+<h3 id="winnerText"></h3>
 
 <script type="module" src="room.js"></script>
 </body>
