@@ -1,7 +1,7 @@
 import { db } from "./firebase.js";
 import { doc,setDoc,updateDoc,getDoc,getDocs,onSnapshot,collection }
 from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { buatDeck,hitungSpirit,cekBrerong } from "./game.js";
+import { buatDeck,hitungSpirit,semuaSelesaiSpirit,semuaSelesaiBrerong } from "./game.js";
 
 const roomId=localStorage.getItem("roomId");
 const name=localStorage.getItem("playerName");
@@ -29,12 +29,8 @@ window.readyUp=async()=>{
  if(!allReady) return;
 
  let deck=buatDeck();
- let jumlahKartu = mode==="brerong"?4:1;
-
  for(let id of ids){
-  let cards=[];
-  for(let i=0;i<jumlahKartu;i++) cards.push(deck.pop());
-  await updateDoc(doc(db,"rooms",roomId,"players",id),{cards});
+  await updateDoc(doc(db,"rooms",roomId,"players",id),{cards:[deck.pop()]});
  }
 
  await setDoc(roomRef,{deck,turn:ids[0],gameStarted:true,mode});
@@ -45,41 +41,47 @@ function tampilPemain(){
   let html="";
   snap.forEach(d=>{
    let p=d.data();
-   html+=`
-   <div class="playerBox">
-     <div><b>${p.name}</b></div>
-     <div>Kartu: ${p.cards.length}</div>
-     <div>Skor: ${p.score||0}</div>
-   </div>`;
+   html+=`<div>${p.name} | Kartu:${p.cards.length} | Skor:${p.score||0}</div>`;
   });
   players.innerHTML=html;
  });
 }
 
+function renderDots(n){
+  return "●".repeat(n);
+}
+
 function tampilKartu(){
  onSnapshot(doc(db,"rooms",roomId,"players",playerId),snap=>{
   let html="";
-  snap.data()?.cards.forEach(c=>{
-   html+=`
-   <div class="domino">
-     <div>${c.left}</div>
-     <div>${c.right}</div>
-   </div>`;
+  snap.data()?.cards.forEach((c,i)=>{
+   if(!c.open){
+     html+=`<div onclick="bukaKartu(${i})" style="width:60px;height:110px;
+     background:#1f2937;border-radius:10px;display:inline-block;margin:6px;"></div>`;
+   }else{
+     html+=`<div style="width:60px;height:110px;background:white;color:black;
+     border-radius:10px;display:inline-flex;flex-direction:column;
+     justify-content:space-around;align-items:center;margin:6px;font-size:18px;">
+     <div>${renderDots(c.left)}</div><div>${renderDots(c.right)}</div></div>`;
+   }
   });
   myCards.innerHTML=html;
  });
 }
 
+window.bukaKartu=async(index)=>{
+ let pRef=doc(db,"rooms",roomId,"players",playerId);
+ let snap=await getDoc(pRef);
+ let cards=snap.data().cards;
+ cards[index].open=true;
+ await updateDoc(pRef,{cards});
+};
+
 function kontrolGiliran(){
  onSnapshot(roomRef,snap=>{
   let room=snap.data(); if(!room) return;
-  if(room.turn===playerId && mode==="spirit"){
-    drawBtn.style.display="inline";
-    passBtn.style.display="inline";
-  } else {
-    drawBtn.style.display="none";
-    passBtn.style.display="none";
-  }
+  if(room.turn===playerId){drawBtn.style.display="inline";passBtn.style.display="inline";}
+  else{drawBtn.style.display="none";passBtn.style.display="none";}
  });
 }
 
@@ -87,11 +89,14 @@ window.drawCard=async()=>{
  let pRef=doc(db,"rooms",roomId,"players",playerId);
  let pSnap=await getDoc(pRef);
  let cards=pSnap.data().cards;
- if(cards.length>=3) return alert("Maks 3 kartu!");
+
+ if(mode==="spirit" && cards.length>=3) return alert("Maks 3 kartu");
+ if(mode==="brerong" && cards.length>=4) return;
 
  let r=await getDoc(roomRef);
  let deck=r.data().deck;
  cards.push(deck.pop());
+
  await updateDoc(pRef,{cards});
  await nextTurn(deck);
 };
@@ -103,40 +108,26 @@ window.passTurn=async()=>{
 
 async function nextTurn(deck){
  const snap=await getDocs(collection(db,"rooms",roomId,"players"));
- let ids=[]; snap.forEach(d=>ids.push(d.id));
+ let ids=[]; let playersData=[];
+ snap.forEach(d=>{ids.push(d.id);playersData.push(d.data());});
  let r=await getDoc(roomRef);
  let next=ids[(ids.indexOf(r.data().turn)+1)%ids.length];
+
  await updateDoc(roomRef,{turn:next,deck});
- cekPemenang();
+ cekPemenang(playersData);
 }
 
-async function cekPemenang(){
- const snap=await getDocs(collection(db,"rooms",roomId,"players"));
- let winner=null, bestRank=-1, bestPoint=-1;
+async function cekPemenang(players){
+ if(mode==="spirit" && !semuaSelesaiSpirit(players)) return;
+ if(mode==="brerong" && !semuaSelesaiBrerong(players)) return;
 
- snap.forEach(d=>{
-  let p=d.data();
-  if(mode==="spirit"){
-    let pt=hitungSpirit(p.cards);
-    if(pt>bestPoint){bestPoint=pt;winner=d.id;}
-  }else{
-    let r=cekBrerong(p.cards);
-    if(r.rank>bestRank){bestRank=r.rank;winner=d.id;}
-  }
+ let best=-1,winnerIndex=-1;
+ players.forEach((p,i)=>{
+  let pt=hitungSpirit(p.cards);
+  if(pt>best){best=pt;winnerIndex=i;}
  });
 
- if(winner){
-  let wRef=doc(db,"rooms",roomId,"players",winner);
-  let wSnap=await getDoc(wRef);
-  await updateDoc(wRef,{score:(wSnap.data().score||0)+1});
+ if(winnerIndex>=0){
   winnerText.innerText="Pemenang ditemukan!";
  }
 }
-
-window.restartGame=async()=>{
- const snap=await getDocs(collection(db,"rooms",roomId,"players"));
- snap.forEach(async d=>{
-  await updateDoc(doc(db,"rooms",roomId,"players",d.id),{cards:[],ready:false});
- });
- winnerText.innerText="";
-};
