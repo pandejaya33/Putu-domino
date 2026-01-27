@@ -1,50 +1,31 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8" />
   <title>Domino Online</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 </head>
-<body>
-  <h1>DOMINO ONLINE</h1>
 
-  <input id="name" placeholder="Masukkan Nama">
+<body style="font-family:sans-serif;text-align:center;background:#0f172a;color:white;padding-top:40px;">
 
-  <button onclick="createRoom('spirit')">Mode Spirit</button>
-  <button onclick="createRoom('brerong')">Mode Brerong</button>
+  <h2>PUTU Domino Online</h2>
+
+  <input id="nameInput" placeholder="Nama kamu"
+    style="padding:10px;width:200px;font-size:16px;" />
   <br><br>
-<label>Jumlah Bot:</label>
-<select id="botCount">
-  <option value="0">0</option>
-  <option value="1">1</option>
-  <option value="2">2</option>
-  <option value="3">3</option>
-</select>
 
-  <script type="module">
-    import { db } from "./firebase.js";
-    import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  <input id="roomInput" placeholder="Kode Room (jika mau gabung)"
+    style="padding:10px;width:200px;font-size:16px;" />
+  <br><br>
 
-    window.createRoom = async function(mode){
-  const name = document.getElementById("name").value;
-  const botCount = parseInt(document.getElementById("botCount").value);
+  <button onclick="buatRoom()" style="padding:10px 15px;font-size:16px;">
+    Buat Room Baru
+  </button>
 
-  if(!name) return alert("Masukkan nama");
+  <button onclick="gabungRoom()" style="padding:10px 15px;font-size:16px;">
+    Gabung Room
+  </button>
 
-  const roomId = Math.random().toString(36).substring(2,7);
-
-  localStorage.setItem("playerName", name);
-  localStorage.setItem("roomId", roomId);
-  localStorage.setItem("mode", mode);
-
-  await setDoc(doc(db,"rooms",roomId),{
-    mode: mode,
-    status: "waiting",
-    botCount: botCount
-  });
-
-  window.location = "room.html";
-}
-  </script>
+  <script src="index.js"></script>
 </body>
 </html>
