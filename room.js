@@ -1,6 +1,7 @@
 import { db } from "./firebase.js";
 import { doc,setDoc,updateDoc,getDoc,getDocs,onSnapshot,collection }
-from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { buatDeck } from "./game.js";
 
 const roomId = localStorage.getItem("roomId");
@@ -84,29 +85,47 @@ function tampilKartu(){
 
 // ================= GILIRAN =================
 function kontrolGiliran(){
-  onSnapshot(roomRef,snap=>{
-    let room=snap.data();
+  onSnapshot(roomRef, async snap=>{
+    let room = snap.data();
     if(!room) return;
-    if(room.turn===playerId){
-      drawBtn.style.display="inline-block";
-      passBtn.style.display="inline-block";
-    }else{
-      drawBtn.style.display="none";
-      passBtn.style.display="none";
+
+    const pSnap = await getDoc(doc(db,"rooms",roomId,"players",playerId));
+    const cards = pSnap.data()?.cards || [];
+
+    if(room.turn === playerId){
+      passBtn.style.display = "inline-block";
+
+      // 🚫 Jika sudah 3 kartu, tidak bisa ambil
+      if(cards.length >= 3){
+        drawBtn.style.display = "none";
+      } else {
+        drawBtn.style.display = "inline-block";
+      }
+
+    } else {
+      drawBtn.style.display = "none";
+      passBtn.style.display = "none";
     }
   });
 }
 
 // ================= AMBIL =================
-window.drawCard=async()=>{
-  let r=await getDoc(roomRef);
-  let deck=r.data().deck;
-  if(deck.length===0) return;
+window.drawCard = async () => {
+  const pRef = doc(db,"rooms",roomId,"players",playerId);
+  const pSnap = await getDoc(pRef);
+  const cards = pSnap.data().cards || [];
 
-  let card=deck.pop();
-  let pRef=doc(db,"rooms",roomId,"players",playerId);
-  let pSnap=await getDoc(pRef);
-  let cards=pSnap.data().cards;
+  // 🚫 BATAS 3 KARTU MODE SPIRIT
+  if(cards.length >= 3){
+    alert("Maksimal 3 kartu di mode Spirit!");
+    return;
+  }
+
+  let r = await getDoc(roomRef);
+  let deck = r.data().deck;
+  if(deck.length === 0) return;
+
+  let card = deck.pop();
   cards.push(card);
 
   await updateDoc(pRef,{cards:cards});
