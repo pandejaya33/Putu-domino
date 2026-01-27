@@ -2,7 +2,7 @@ function randomRoom(){
   return Math.random().toString(36).substring(2,7);
 }
 
-window.buatRoom = ()=>{
+window.buatRoom = function(){
   const name = document.getElementById("nameInput").value;
   if(!name) return alert("Isi nama dulu");
 
@@ -14,7 +14,7 @@ window.buatRoom = ()=>{
   window.location.href="room.html";
 };
 
-window.gabungRoom = ()=>{
+window.gabungRoom = function(){
   const name = document.getElementById("nameInput").value;
   const roomId = document.getElementById("roomInput").value;
 
