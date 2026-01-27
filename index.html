@@ -1,31 +1,28 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8" />
-  <title>Domino Online</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8" />
+<title>Domino Online</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 </head>
 
 <body style="font-family:sans-serif;text-align:center;background:#0f172a;color:white;padding-top:40px;">
 
-  <h2>PUTU Domino Online</h2>
+<h2>DOMINO ONLINE</h2>
 
-  <input id="nameInput" placeholder="Nama kamu"
-    style="padding:10px;width:200px;font-size:16px;" />
-  <br><br>
+<input id="nameInput" placeholder="Nama kamu" style="padding:10px;width:200px;"><br><br>
+<input id="roomInput" placeholder="Kode Room (jika gabung)" style="padding:10px;width:200px;"><br><br>
 
-  <input id="roomInput" placeholder="Kode Room (jika mau gabung)"
-    style="padding:10px;width:200px;font-size:16px;" />
-  <br><br>
+<select id="modeSelect" style="padding:10px;width:220px;">
+  <option value="spirit">Mode Spirit</option>
+  <option value="brerong">Mode Brerong</option>
+</select>
 
-  <button onclick="buatRoom()" style="padding:10px 15px;font-size:16px;">
-    Buat Room Baru
-  </button>
+<br><br>
 
-  <button onclick="gabungRoom()" style="padding:10px 15px;font-size:16px;">
-    Gabung Room
-  </button>
+<button onclick="buatRoom()">Buat Room</button>
+<button onclick="gabungRoom()">Gabung Room</button>
 
-  <script type="module" src="index.js"></script>
+<script type="module" src="index.js"></script>
 </body>
 </html>
