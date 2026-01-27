@@ -1,51 +1,46 @@
 import { db } from "./firebase.js";
-import {
-  doc,setDoc,updateDoc,onSnapshot,collection,getDoc,getDocs
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { doc,setDoc,updateDoc,onSnapshot,collection,getDoc,getDocs }
+from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { buatDeck } from "./game.js";
 
-const roomId = localStorage.getItem("roomId");
-const name = localStorage.getItem("playerName");
-const playerId = Date.now().toString();
-const roomRef = doc(db,"rooms",roomId);
+const roomId=localStorage.getItem("roomId");
+const name=localStorage.getItem("playerName");
+const playerId=Date.now().toString();
+const roomRef=doc(db,"rooms",roomId);
 
-document.getElementById("roomCode").innerText=roomId;
+roomCode.innerText=roomId;
 
-start();
+init();
 
-async function start(){
+async function init(){
 
-// ====== MASUK PLAYER
 await setDoc(doc(db,"rooms",roomId,"players",playerId),{
-  name:name, ready:false, cards:[]
+  name:name,ready:false,cards:[]
 });
 
-// ====== READY
 window.readyUp=async()=>{
   await updateDoc(doc(db,"rooms",roomId,"players",playerId),{ready:true});
 };
 
-// ====== LIST PEMAIN
+// tampil pemain
 onSnapshot(collection(db,"rooms",roomId,"players"),snap=>{
   let html="";
   snap.forEach(d=>{
     let p=d.data();
     html+=`<div>${p.name} ${p.ready?"✅":"⏳"}</div>`;
   });
-  document.getElementById("players").innerHTML=html;
+  players.innerHTML=html;
 });
 
-// ====== START GAME (sekali saja)
-onSnapshot(roomRef,async(snap)=>{
+// mulai game sekali
+onSnapshot(roomRef,async snap=>{
   let room=snap.data()||{};
   if(room.gameStarted) return;
 
-  const playersSnap=await getDocs(collection(db,"rooms",roomId,"players"));
-  let players=[];
-  let allReady=true;
-
-  playersSnap.forEach(d=>{
-    players.push(d.id);
+  const ps=await getDocs(collection(db,"rooms",roomId,"players"));
+  let ids=[], allReady=true;
+  ps.forEach(d=>{
+    ids.push(d.id);
     if(!d.data().ready) allReady=false;
   });
 
@@ -53,20 +48,19 @@ onSnapshot(roomRef,async(snap)=>{
 
   let deck=buatDeck();
 
-  for(let id of players){
-    let card=deck.pop();
+  for(let id of ids){
     await updateDoc(doc(db,"rooms",roomId,"players",id),{
-      cards:[card]
+      cards:[deck.pop()]
     });
   }
 
-  await updateDoc(roomRef,{deck:deck,turn:players[0],gameStarted:true});
+  await updateDoc(roomRef,{deck:deck,turn:ids[0],gameStarted:true});
 });
 
-// ====== TAMPILKAN KARTU
+// tampil kartu
 onSnapshot(doc(db,"rooms",roomId,"players",playerId),snap=>{
   let data=snap.data();
-  if(!data||!data.cards) return;
+  if(!data) return;
 
   let html="";
   data.cards.forEach(c=>{
@@ -74,14 +68,13 @@ onSnapshot(doc(db,"rooms",roomId,"players",playerId),snap=>{
     padding:12px;margin:6px;border-radius:8px;font-weight:bold;">
     ${c.left} | ${c.right}</div>`;
   });
-  document.getElementById("myCards").innerHTML=html;
+  myCards.innerHTML=html;
 });
 
-// ====== TOMBOL GILIRAN
+// tombol giliran
 onSnapshot(roomRef,snap=>{
   let room=snap.data();
-  if(!room||!room.turn) return;
-
+  if(!room) return;
   if(room.turn===playerId){
     drawBtn.style.display="inline-block";
     passBtn.style.display="inline-block";
@@ -93,15 +86,15 @@ onSnapshot(roomRef,snap=>{
 
 }
 
-// ===== AMBIL
+// ambil kartu
 window.drawCard=async()=>{
-  const r=await getDoc(roomRef);
+  let r=await getDoc(roomRef);
   let deck=r.data().deck;
   if(deck.length===0) return;
 
   let card=deck.pop();
-  const pRef=doc(db,"rooms",roomId,"players",playerId);
-  const pSnap=await getDoc(pRef);
+  let pRef=doc(db,"rooms",roomId,"players",playerId);
+  let pSnap=await getDoc(pRef);
   let cards=pSnap.data().cards;
   cards.push(card);
 
@@ -109,9 +102,8 @@ window.drawCard=async()=>{
   await nextTurn(deck);
 };
 
-// ===== LEWATI
 window.passTurn=async()=>{
-  const r=await getDoc(roomRef);
+  let r=await getDoc(roomRef);
   await nextTurn(r.data().deck);
 };
 
@@ -120,9 +112,9 @@ async function nextTurn(deck){
   let ids=[];
   snap.forEach(d=>ids.push(d.id));
 
-  const r=await getDoc(roomRef);
-  let index=ids.indexOf(r.data().turn);
-  let next=ids[(index+1)%ids.length];
+  let r=await getDoc(roomRef);
+  let idx=ids.indexOf(r.data().turn);
+  let next=ids[(idx+1)%ids.length];
 
   await updateDoc(roomRef,{turn:next,deck:deck});
 }
