@@ -8,13 +8,12 @@
 </head>
 <body>
   <div class="container">
-    <div class="header">
-      Kode: <strong id="roomCode"></strong>
-    </div>
+    <div class="header">Kode: <strong id="roomCode"></strong></div>
     
     <div class="playerBox">
       <div id="playerList"></div>
       <button id="btnReady" onclick="setReady()">SIAP (READY)</button>
+      <button id="btnBot" onclick="tambahBot()" style="background:#6366f1; color:white; margin-top:10px;">🤖 MAIN VS KOMPUTER</button>
     </div>
 
     <div class="gameBox">
@@ -22,7 +21,7 @@
       <button id="btnLanjut" onclick="ambilKartuLanjut()" style="display:none; background:#3b82f6; color:white; margin-top:20px;">🃏 KARTU BERIKUTNYA</button>
     </div>
 
-    <button onclick="mainLagi()" style="background:#ef4444; color:white; margin-top:30px; font-size:11px; padding:8px; width:50%;">🔄 RESET</button>
+    <button onclick="mainLagi()" style="background:#ef4444; color:white; margin-top:30px; font-size:11px; padding:8px; width:50%;">🔄 RESET GAME</button>
   </div>
   <script type="module" src="room.js"></script>
 </body>
