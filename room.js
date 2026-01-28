@@ -5,36 +5,25 @@ import { buatDeck } from "./game.js";
 const roomId = localStorage.getItem("roomId");
 const myId = localStorage.getItem("playerId");
 const myName = localStorage.getItem("playerName");
+const myMode = localStorage.getItem("mode") || "spirit";
 const roomRef = doc(db, "rooms", roomId);
 
-let pembagianSedangBerjalan = false;
+let kunciProses = false; 
 
-// 1. GABUNG ROOM TANPA MENGHAPUS YANG LAIN
 async function initRoom() {
   const snap = await getDoc(roomRef);
   const me = { id: myId, name: myName, ready: false, cards: [], revealed: [], isBot: false };
-  
   if (!snap.exists()) {
-    // Jika room belum ada, buat baru
-    await setDoc(roomRef, { 
-      players: [me], 
-      started: false, 
-      deck: buatDeck(),
-      hostId: myId // Tandai pembuat room sebagai Host
-    });
+    await setDoc(roomRef, { players: [me], started: false, deck: buatDeck(), mode: myMode, hostId: myId });
   } else {
-    // Jika room ada, tambah pemain ke array (tanpa menimpa)
     const room = snap.data();
     if (!room.players.find(p => p.id === myId)) {
-      await updateDoc(roomRef, { 
-        players: arrayUnion(me) 
-      });
+      await updateDoc(roomRef, { players: arrayUnion(me) });
     }
   }
 }
 initRoom();
 
-// 2. MONITORING DATA
 onSnapshot(roomRef, (snap) => {
   if (!snap.exists()) return;
   const room = snap.data();
@@ -42,7 +31,7 @@ onSnapshot(roomRef, (snap) => {
 
   document.getElementById("roomCode").innerText = roomId;
   
-  // Tampilkan SEMUA Pemain
+  // List Pemain
   const list = document.getElementById("playerList");
   list.innerHTML = room.players.map(p => `
     <div class="player-item">
@@ -51,7 +40,7 @@ onSnapshot(roomRef, (snap) => {
     </div>
   `).join("");
 
-  // Tampilkan Kartu Saya
+  // Kartu Saya
   const area = document.getElementById("kartuSaya");
   area.innerHTML = "";
   if (me && me.cards) {
@@ -69,32 +58,52 @@ onSnapshot(roomRef, (snap) => {
     });
   }
 
-  // Kontrol Tombol
-  document.getElementById("btnLanjut").style.display = room.started ? "block" : "none";
-  document.getElementById("btnBot").style.display = room.started ? "none" : "block";
+  // ATURAN LIMIT (Spirit 3, Brerong 4)
+  const maxKartu = room.mode === "spirit" ? 3 : 4;
+  const btnLanjut = document.getElementById("btnLanjut");
+  
+  // Tombol HANYA muncul jika kartu belum maksimal
+  if (room.started && me && me.cards.length > 0 && me.cards.length < maxKartu) {
+    btnLanjut.style.display = "block";
+  } else {
+    btnLanjut.style.display = "none";
+  }
 
-  // LOGIKA BAGI KARTU (Hanya Host yang boleh eksekusi)
+  // MULAI GAME (HANYA 1 KARTU)
   if (!room.started && room.players.length >= 2 && room.players.every(p => p.ready)) {
-    if (room.hostId === myId && !pembagianSedangBerjalan) {
-      pembagianSedangBerjalan = true;
-      eksekusiBagiSatuKartu(room);
+    if (room.hostId === myId && !kunciProses) {
+      kunciProses = true;
+      prosesBagiKartuPertama(room);
     }
   }
 });
 
-async function eksekusiBagiSatuKartu(room) {
+async function prosesBagiKartuPertama(room) {
   let deck = [...room.deck];
   const playersBaru = room.players.map(p => {
-    const k = deck.pop();
-    return { ...p, cards: [`${k.left}|${k.right}`], revealed: p.isBot ? [0] : [] };
+    const k = deck.pop(); 
+    return { ...p, cards: [`${k.left}|${k.right}`], revealed: [] };
   });
-
-  await updateDoc(roomRef, { 
-    started: true, 
-    players: playersBaru, 
-    deck: deck 
-  });
+  await updateDoc(roomRef, { started: true, players: playersBaru, deck: deck });
 }
+
+window.ambilKartuLanjut = async () => {
+  const snap = await getDoc(roomRef);
+  const room = snap.data();
+  const maxKartu = room.mode === "spirit" ? 3 : 4;
+  let deck = [...room.deck];
+  let players = [...room.players];
+  const myIdx = players.findIndex(p => p.id === myId);
+
+  // CEK LIMIT LAGI DISINI
+  if (players[myIdx].cards.length < maxKartu && deck.length > 0) {
+    const k = deck.pop();
+    players[myIdx].cards.push(`${k.left}|${k.right}`);
+    await updateDoc(roomRef, { players, deck });
+  } else {
+    alert("Sudah mencapai batas kartu maksimal!");
+  }
+};
 
 window.tambahBot = async () => {
   const snap = await getDoc(roomRef);
@@ -103,8 +112,7 @@ window.tambahBot = async () => {
     { id: "bot2", name: "Mangku", ready: true, cards: [], revealed: [], isBot: true },
     { id: "bot3", name: "Dontol", ready: true, cards: [], revealed: [], isBot: true }
   ];
-  const room = snap.data();
-  await updateDoc(roomRef, { players: [...room.players, ...bots] });
+  await updateDoc(roomRef, { players: [...snap.data().players, ...bots] });
 };
 
 window.setReady = async () => {
@@ -113,22 +121,6 @@ window.setReady = async () => {
   const idx = players.findIndex(p => p.id === myId);
   players[idx].ready = true;
   await updateDoc(roomRef, { players });
-};
-
-window.ambilKartuLanjut = async () => {
-  const snap = await getDoc(roomRef);
-  const room = snap.data();
-  let deck = [...room.deck];
-  let players = [...room.players];
-  
-  players.forEach(p => {
-    if (deck.length > 0) {
-      const k = deck.pop();
-      p.cards.push(`${k.left}|${k.right}`);
-      if (p.isBot) p.revealed.push(p.cards.length - 1);
-    }
-  });
-  await updateDoc(roomRef, { players, deck });
 };
 
 window.bukaKartu = async (i) => {
