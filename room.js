@@ -5,10 +5,11 @@ import { buatDeck } from "./game.js";
 const roomId = localStorage.getItem("roomId");
 const myId = localStorage.getItem("playerId");
 const myName = localStorage.getItem("playerName");
-
 const roomRef = doc(db, "rooms", roomId);
 
-// 1. Inisialisasi Room
+// Kunci lokal agar tidak menjalankan fungsi dua kali
+let pembagianSedangBerjalan = false;
+
 async function initRoom() {
   const snap = await getDoc(roomRef);
   if (!snap.exists()) {
@@ -28,21 +29,23 @@ async function initRoom() {
 }
 initRoom();
 
-// 2. Monitoring Perubahan Data
 onSnapshot(roomRef, (snap) => {
   if (!snap.exists()) return;
   const room = snap.data();
   const me = room.players.find(p => p.id === myId);
 
-  // Tampilkan Nama Pemain & Jumlah Kartu
+  document.getElementById("roomCode").innerText = roomId;
+  
+  // Tampilan List Pemain
   const list = document.getElementById("playerList");
   list.innerHTML = room.players.map(p => `
     <div class="player-item">
-      ${p.name} | ${p.ready ? '✅' : '⏳'} (${p.cards.length} kartu)
+      <span>${p.isBot ? '🤖' : '👤'} ${p.name}</span> 
+      <span>${p.ready ? '✅' : '⏳'} (${p.cards.length} kartu)</span>
     </div>
   `).join("");
 
-  // Tampilkan Kartu (Hanya yang ada di array me.cards)
+  // Tampilan Kartu
   const area = document.getElementById("kartuSaya");
   area.innerHTML = "";
   if (me && me.cards) {
@@ -60,47 +63,42 @@ onSnapshot(roomRef, (snap) => {
     });
   }
 
-  // Tampilkan Tombol Lanjut hanya jika sudah mulai
+  // Kontrol Tombol
   document.getElementById("btnLanjut").style.display = room.started ? "block" : "none";
+  document.getElementById("btnBot").style.display = room.started ? "none" : "block";
 
-  // Logika MULAI: Jika semua ready, panggil pembagian 1 kartu
+  // LOGIKA START: Hanya jalankan jika kamu adalah pemain pertama (Host) agar tidak bentrok
   if (!room.started && room.players.length >= 2 && room.players.every(p => p.ready)) {
-    bagikanSatuKartuSaja(room);
+    if (room.players[0].id === myId && !pembagianSedangBerjalan) {
+      pembagianSedangBerjalan = true; 
+      eksekusiBagiSatuKartu(room);
+    }
   }
 });
 
-// FUNGSI INI ADALAH KUNCI: HANYA MEMBERIKAN 1 KARTU
-async function bagikanSatuKartuSaja(room) {
+async function eksekusiBagiSatuKartu(room) {
+  console.log("Membagikan 1 kartu...");
   let deck = [...room.deck];
-  const updatedPlayers = room.players.map(p => {
-    const k = deck.pop(); // Ambil cuma 1 kartu dari deck
-    return { 
-      ...p, 
-      cards: [`${k.left}|${k.right}`], // Array ini dipaksa hanya berisi 1 string kartu
-      revealed: [] 
-    };
+  const playersBaru = room.players.map(p => {
+    const k = deck.pop();
+    return { ...p, cards: [`${k.left}|${k.right}`], revealed: p.isBot ? [0] : [] };
   });
 
   await updateDoc(roomRef, { 
     started: true, 
-    players: updatedPlayers, 
+    players: playersBaru, 
     deck: deck 
   });
 }
 
-// Ambil kartu tambahan (Satu per satu)
-window.ambilKartuLanjut = async () => {
+window.tambahBot = async () => {
   const snap = await getDoc(roomRef);
-  const room = snap.data();
-  let deck = [...room.deck];
-  let players = [...room.players];
-  const myIdx = players.findIndex(p => p.id === myId);
-
-  if (deck.length > 0) {
-    const k = deck.pop();
-    players[myIdx].cards.push(`${k.left}|${k.right}`);
-    await updateDoc(roomRef, { players, deck });
-  }
+  const bots = [
+    { id: "bot1", name: "Mas J", ready: true, cards: [], revealed: [], isBot: true },
+    { id: "bot2", name: "Mangku", ready: true, cards: [], revealed: [], isBot: true },
+    { id: "bot3", name: "Dontol", ready: true, cards: [], revealed: [], isBot: true }
+  ];
+  await updateDoc(roomRef, { players: [...snap.data().players, ...bots] });
 };
 
 window.setReady = async () => {
@@ -111,10 +109,27 @@ window.setReady = async () => {
   await updateDoc(roomRef, { players });
 };
 
-window.bukaKartu = async (i) => {
+window.ambilKartuLanjut = async () => {
   const snap = await getDoc(roomRef);
   const room = snap.data();
-  const players = [...room.players];
+  let deck = [...room.deck];
+  let players = [...room.players];
+  
+  // Semua ambil 1 kartu tambahan
+  players.forEach(p => {
+    if (deck.length > 0) {
+      const k = deck.pop();
+      p.cards.push(`${k.left}|${k.right}`);
+      if (p.isBot) p.revealed.push(p.cards.length - 1);
+    }
+  });
+
+  await updateDoc(roomRef, { players, deck });
+};
+
+window.bukaKartu = async (i) => {
+  const snap = await getDoc(roomRef);
+  const players = [...snap.data().players];
   const idx = players.findIndex(p => p.id === myId);
   if (!players[idx].revealed) players[idx].revealed = [];
   if (!players[idx].revealed.includes(i)) {
