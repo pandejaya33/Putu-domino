@@ -8,7 +8,7 @@ const myName = localStorage.getItem("playerName");
 const myMode = localStorage.getItem("mode") || "spirit";
 const roomRef = doc(db, "rooms", roomId);
 
-let kunciProses = false; 
+let kunciBagi = false; // Mencegah bagi kartu 2x
 
 async function initRoom() {
   const snap = await getDoc(roomRef);
@@ -31,7 +31,7 @@ onSnapshot(roomRef, (snap) => {
 
   document.getElementById("roomCode").innerText = roomId;
   
-  // List Pemain
+  // Update List Pemain
   const list = document.getElementById("playerList");
   list.innerHTML = room.players.map(p => `
     <div class="player-item">
@@ -40,7 +40,7 @@ onSnapshot(roomRef, (snap) => {
     </div>
   `).join("");
 
-  // Kartu Saya
+  // Update Kartu Saya
   const area = document.getElementById("kartuSaya");
   area.innerHTML = "";
   if (me && me.cards) {
@@ -58,34 +58,30 @@ onSnapshot(roomRef, (snap) => {
     });
   }
 
-  // ATURAN LIMIT (Spirit 3, Brerong 4)
+  // ATURAN LIMIT KARTU (SPIRIT 3, BRERONG 4)
   const maxKartu = room.mode === "spirit" ? 3 : 4;
   const btnLanjut = document.getElementById("btnLanjut");
   
-  // Tombol HANYA muncul jika kartu belum maksimal
+  // Tombol HILANG jika kartu sudah mencapai batas maksimal
   if (room.started && me && me.cards.length > 0 && me.cards.length < maxKartu) {
     btnLanjut.style.display = "block";
   } else {
     btnLanjut.style.display = "none";
   }
 
-  // MULAI GAME (HANYA 1 KARTU)
+  // BAGIKAN KARTU PERTAMA (DIPAKSA HANYA 1 KARTU)
   if (!room.started && room.players.length >= 2 && room.players.every(p => p.ready)) {
-    if (room.hostId === myId && !kunciProses) {
-      kunciProses = true;
-      prosesBagiKartuPertama(room);
+    if (room.hostId === myId && !kunciBagi) {
+      kunciBagi = true; // Kunci biar tidak jalan 2x
+      const deck = [...room.deck];
+      const pBaru = room.players.map(p => {
+        const k = deck.pop();
+        return { ...p, cards: [`${k.left}|${k.right}`], revealed: [] };
+      });
+      updateDoc(roomRef, { started: true, players: pBaru, deck: deck });
     }
   }
 });
-
-async function prosesBagiKartuPertama(room) {
-  let deck = [...room.deck];
-  const playersBaru = room.players.map(p => {
-    const k = deck.pop(); 
-    return { ...p, cards: [`${k.left}|${k.right}`], revealed: [] };
-  });
-  await updateDoc(roomRef, { started: true, players: playersBaru, deck: deck });
-}
 
 window.ambilKartuLanjut = async () => {
   const snap = await getDoc(roomRef);
@@ -93,15 +89,13 @@ window.ambilKartuLanjut = async () => {
   const maxKartu = room.mode === "spirit" ? 3 : 4;
   let deck = [...room.deck];
   let players = [...room.players];
-  const myIdx = players.findIndex(p => p.id === myId);
+  const idx = players.findIndex(p => p.id === myId);
 
-  // CEK LIMIT LAGI DISINI
-  if (players[myIdx].cards.length < maxKartu && deck.length > 0) {
+  // CEK LAGI SUPAYA TIDAK BISA TEMBUS LIMIT
+  if (players[idx].cards.length < maxKartu) {
     const k = deck.pop();
-    players[myIdx].cards.push(`${k.left}|${k.right}`);
+    players[idx].cards.push(`${k.left}|${k.right}`);
     await updateDoc(roomRef, { players, deck });
-  } else {
-    alert("Sudah mencapai batas kartu maksimal!");
   }
 };
 
