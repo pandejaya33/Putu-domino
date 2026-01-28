@@ -9,21 +9,20 @@
 <body>
   <div class="container">
     <div class="header">
-      Kode Room: <strong id="roomCode"></strong>
+      Kode: <strong id="roomCode"></strong>
     </div>
     
     <div class="playerBox">
       <div id="playerList"></div>
-      <button id="btnReady" onclick="setReady()">SIAP / READY</button>
+      <button id="btnReady" onclick="setReady()">SIAP (READY)</button>
     </div>
 
     <div class="gameBox">
-      <h3>Kartu Saya</h3>
       <div id="kartuSaya" class="kartuArea"></div>
-      <button id="btnLanjut" onclick="ambilKartuLanjut()" style="display:none; background:#3b82f6; color:white;">🃏 AMBIL KARTU LANJUT</button>
+      <button id="btnLanjut" onclick="ambilKartuLanjut()" style="display:none; background:#3b82f6; color:white; margin-top:20px;">🃏 KARTU BERIKUTNYA</button>
     </div>
 
-    <button onclick="mainLagi()" style="background:#ef4444; color:white; margin-top:30px; font-size:12px; padding:10px;">🔄 RESET ROOM</button>
+    <button onclick="mainLagi()" style="background:#ef4444; color:white; margin-top:30px; font-size:11px; padding:8px; width:50%;">🔄 RESET</button>
   </div>
   <script type="module" src="room.js"></script>
 </body>
