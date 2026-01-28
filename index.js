@@ -7,6 +7,8 @@ window.buatRoom = function(){
   const mode = modeSelect.value;
   if(!name) return alert("Isi nama");
 
+  localStorage.setItem("playerName", nama);
+  
   const roomId = randomRoom();
 
   localStorage.setItem("playerName",name);
@@ -21,6 +23,8 @@ window.gabungRoom = function(){
   const roomId = roomInput.value;
   if(!name || !roomId) return alert("Isi semua");
 
+  localStorage.setItem("playerName", nama);
+  
   localStorage.setItem("playerName",name);
   localStorage.setItem("roomId",roomId);
 
