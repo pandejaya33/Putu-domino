@@ -10,9 +10,12 @@ import { buatDeck } from "./game.js";
 const roomId = localStorage.getItem("roomId");
 const myId   = localStorage.getItem("playerId");
 
-let playersData = [];
 const roomRef = doc(db, "rooms", roomId);
+let playersData = [];
 
+
+// ================= TAMPILKAN KODE ROOM =================
+document.getElementById("roomCode").innerText = roomId;
 
 
 // ================= REALTIME LISTENER =================
@@ -22,33 +25,48 @@ onSnapshot(roomRef, (snap) => {
   let room = snap.data();
   playersData = room.players || [];
 
-  renderPemain(playersData);
+  renderPemain(playersData, room.turn);
   renderKartuSaya();
 });
 
 
-
 // ================= RENDER DAFTAR PEMAIN =================
-function renderPemain(players) {
+function renderPemain(players, turn) {
   const list = document.getElementById("playerList");
   list.innerHTML = "";
 
-  players.forEach(p => {
-    list.innerHTML += `<div>${p.name} | Kartu: ${p.cards.length}</div>`;
+  players.forEach((p, i) => {
+    let giliran = i === turn ? "🎯" : "";
+    let ready = p.ready ? "✅" : "⏳";
+
+    list.innerHTML += `
+      <div>
+        ${giliran} ${p.name} | Kartu:${p.cards.length} ${ready}
+      </div>
+    `;
   });
 }
+
+
+
+// ================= TOMBOL READY =================
+window.setReady = async function () {
+  const snap = await getDoc(roomRef);
+  let room = snap.data();
+
+  let me = room.players.find(p => p.id === myId);
+  me.ready = true;
+
+  await updateDoc(roomRef, { players: room.players });
+};
 
 
 
 // ================= GAMBAR TITIK DOMINO =================
 function gambarTitik(n) {
   const dots = {
-    0: [],
-    1: [5],
-    2: [1, 9],
-    3: [1, 5, 9],
-    4: [1, 3, 7, 9],
-    5: [1, 3, 5, 7, 9],
+    0: [], 1: [5], 2: [1, 9], 3: [1, 5, 9],
+    4: [1, 3, 7, 9], 5: [1, 3, 5, 7, 9],
     6: [1, 3, 4, 6, 7, 9]
   };
 
@@ -92,25 +110,23 @@ function renderKartuSaya() {
 
 
 
-// ================= BUKA KARTU SAAT DIKETUK =================
-window.bukaKartu = async function(index) {
+// ================= BUKA KARTU =================
+window.bukaKartu = async function (index) {
   const snap = await getDoc(roomRef);
   let room = snap.data();
 
   let me = room.players.find(p => p.id === myId);
   if (!me.revealed) me.revealed = [];
 
-  if (!me.revealed.includes(index)) {
-    me.revealed.push(index);
-  }
+  if (!me.revealed.includes(index)) me.revealed.push(index);
 
   await updateDoc(roomRef, { players: room.players });
 };
 
 
 
-// ================= MAIN LAGI (RESET RONDE) =================
-window.mainLagi = async function() {
+// ================= MAIN LAGI =================
+window.mainLagi = async function () {
   let deck = buatDeck().sort(() => Math.random() - 0.5);
 
   let snap = await getDoc(roomRef);
