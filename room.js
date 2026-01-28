@@ -1,143 +1,133 @@
 import { db } from "./firebase.js";
-import { doc,setDoc,updateDoc,getDoc,getDocs,onSnapshot,collection }
-from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import {
+  doc,
+  onSnapshot,
+  updateDoc,
+  getDoc
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { buatDeck } from "./game.js";
 
-const roomId=localStorage.getItem("roomId");
-const name=localStorage.getItem("playerName");
-const mode=localStorage.getItem("mode")||"spirit";
-const playerId=Date.now().toString();
+const roomId = localStorage.getItem("roomId");
+const myId   = localStorage.getItem("playerId");
 
-const roomRef=doc(db,"rooms",roomId);
-roomCode.innerText=roomId;
-modeText.innerText="Mode: "+mode;
+let playersData = [];
+const roomRef = doc(db, "rooms", roomId);
 
-init();
 
-async function init(){
- await setDoc(doc(db,"rooms",roomId,"players",playerId),{
-  name,ready:false,cards:[],score:0
- });
- tampilPemain(); tampilKartu(); kontrolGiliran();
-}
 
-window.readyUp=async()=>{
- await updateDoc(doc(db,"rooms",roomId,"players",playerId),{ready:true});
- const snap=await getDocs(collection(db,"rooms",roomId,"players"));
- let ids=[],allReady=true;
- snap.forEach(d=>{ids.push(d.id); if(!d.data().ready) allReady=false;});
- if(!allReady) return;
+// ================= REALTIME LISTENER =================
+onSnapshot(roomRef, (snap) => {
+  if (!snap.exists()) return;
 
- let deck=buatDeck();
- for(let id of ids){
-  await updateDoc(doc(db,"rooms",roomId,"players",id),{cards:[deck.pop()]});
- }
+  let room = snap.data();
+  playersData = room.players || [];
 
- await setDoc(roomRef,{deck,turn:ids[0],gameStarted:true,mode});
-};
+  renderPemain(playersData);
+  renderKartuSaya();
+});
 
-function tampilPemain(){
- onSnapshot(collection(db,"rooms",roomId,"players"),snap=>{
-  let html="";
-  snap.forEach(d=>{
-   let p=d.data();
-   html+=`<div>${p.name} | Kartu:${p.cards.length}</div>`;
+
+
+// ================= RENDER DAFTAR PEMAIN =================
+function renderPemain(players) {
+  const list = document.getElementById("playerList");
+  list.innerHTML = "";
+
+  players.forEach(p => {
+    list.innerHTML += `<div>${p.name} | Kartu: ${p.cards.length}</div>`;
   });
-  players.innerHTML=html;
- });
 }
 
-function renderDots(n){
-  return "●".repeat(n);
+
+
+// ================= GAMBAR TITIK DOMINO =================
+function gambarTitik(n) {
+  const dots = {
+    0: [],
+    1: [5],
+    2: [1, 9],
+    3: [1, 5, 9],
+    4: [1, 3, 7, 9],
+    5: [1, 3, 5, 7, 9],
+    6: [1, 3, 4, 6, 7, 9]
+  };
+
+  let grid = "";
+  for (let i = 1; i <= 9; i++) {
+    grid += `<div class="dot ${dots[n].includes(i) ? "on" : ""}"></div>`;
+  }
+  return `<div class="grid">${grid}</div>`;
 }
 
-function tampilKartu(){
- onSnapshot(doc(db,"rooms",roomId,"players",playerId),snap=>{
-  let html="";
-  snap.data()?.cards.forEach((c,i)=>{
-   if(!c.open){
-     html+=`<div onclick="bukaKartu(${i})" style="width:60px;height:110px;
-     background:#1f2937;border-radius:10px;display:inline-block;margin:6px;"></div>`;
-   }else{
-     html+=`<div style="width:60px;height:110px;background:white;color:black;
-     border-radius:10px;display:inline-flex;flex-direction:column;
-     justify-content:space-around;align-items:center;margin:6px;font-size:18px;">
-     <div>${renderDots(c.left)}</div><div>${renderDots(c.right)}</div></div>`;
-   }
+
+
+// ================= RENDER KARTU SAYA =================
+function renderKartuSaya() {
+  const area = document.getElementById("kartuSaya");
+  area.innerHTML = "";
+
+  let me = playersData.find(p => p.id === myId);
+  if (!me) return;
+
+  me.cards.forEach((card, i) => {
+    let opened = me.revealed?.includes(i);
+    let div = document.createElement("div");
+    div.className = "dominoCard";
+
+    if (opened) {
+      let [a, b] = card.split("|").map(Number);
+      div.innerHTML = `
+        <div class="half">${gambarTitik(a)}</div>
+        <div class="divider"></div>
+        <div class="half">${gambarTitik(b)}</div>
+      `;
+    } else {
+      div.innerHTML = `<div class="back"></div>`;
+    }
+
+    div.onclick = () => bukaKartu(i);
+    area.appendChild(div);
   });
-  myCards.innerHTML=html;
- });
 }
 
-window.bukaKartu=async(index)=>{
- let pRef=doc(db,"rooms",roomId,"players",playerId);
- let snap=await getDoc(pRef);
- let cards=snap.data().cards;
- cards[index].open=true;
- await updateDoc(pRef,{cards});
+
+
+// ================= BUKA KARTU SAAT DIKETUK =================
+window.bukaKartu = async function(index) {
+  const snap = await getDoc(roomRef);
+  let room = snap.data();
+
+  let me = room.players.find(p => p.id === myId);
+  if (!me.revealed) me.revealed = [];
+
+  if (!me.revealed.includes(index)) {
+    me.revealed.push(index);
+  }
+
+  await updateDoc(roomRef, { players: room.players });
 };
 
-function kontrolGiliran(){
- onSnapshot(roomRef,snap=>{
-  let room=snap.data(); if(!room) return;
-  if(room.turn===playerId){drawBtn.style.display="inline";passBtn.style.display="inline";}
-  else{drawBtn.style.display="none";passBtn.style.display="none";}
- });
-}
 
-window.drawCard=async()=>{
- let pRef=doc(db,"rooms",roomId,"players",playerId);
- let pSnap=await getDoc(pRef);
- let cards=pSnap.data().cards;
 
- if(mode==="spirit" && cards.length>=3) return alert("Maks 3 kartu");
- if(mode==="brerong" && cards.length>=4) return;
+// ================= MAIN LAGI (RESET RONDE) =================
+window.mainLagi = async function() {
+  let deck = buatDeck().sort(() => Math.random() - 0.5);
 
- let r=await getDoc(roomRef);
- let deck=r.data().deck;
- cards.push(deck.pop());
+  let snap = await getDoc(roomRef);
+  let room = snap.data();
 
- await updateDoc(pRef,{cards});
- await nextTurn(deck);
+  let players = room.players.map(p => ({
+    ...p,
+    cards: [],
+    revealed: [],
+    ready: false,
+    stand: false
+  }));
+
+  await updateDoc(roomRef, {
+    deck: deck,
+    players: players,
+    turn: 0,
+    started: true
+  });
 };
-
-window.passTurn=async()=>{
- let r=await getDoc(roomRef);
- await nextTurn(r.data().deck);
-};
-
-async function nextTurn(deck){
- const snap=await getDocs(collection(db,"rooms",roomId,"players"));
- let ids=[]; let playersData=[];
- snap.forEach(d=>{ids.push(d.id);playersData.push(d.data());});
- let r=await getDoc(roomRef);
- let next=ids[(ids.indexOf(r.data().turn)+1)%ids.length];
-
- await updateDoc(roomRef,{turn:next,deck});
-}
-
-window.mainLagi = async function(){
-
- const roomRef = doc(db,"rooms",roomId);
- const snap = await getDoc(roomRef);
- let room = snap.data();
-
- // buat deck baru
- let deck = buatDeck().sort(()=>Math.random()-0.5);
-
- // reset semua pemain
- let players = room.players.map(p=>({
-   ...p,
-   cards:[],
-   revealed:[],
-   ready:false,
-   stand:false
- }));
-
- await updateDoc(roomRef,{
-   deck:deck,
-   players:players,
-   turn:0,
-   started:true
- });
-}
