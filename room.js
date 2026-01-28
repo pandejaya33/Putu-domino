@@ -75,13 +75,21 @@ onSnapshot(roomRef, (snap) => {
 window.tambahBot = async () => {
   const snap = await getDoc(roomRef);
   const room = snap.data();
+  
+  // Daftar 3 Bot Komputer
   const bots = [
-    { id: "bot1", name: "Mas J", ready: true, cards: [], revealed: [], isBot: true },
-    { id: "bot2", name: "Mangku", ready: true, cards: [], revealed: [], isBot: true },
-    { id: "bot3", name: "Dontol", ready: true, cards: [], revealed: [], isBot: true }
+    { id: "bot_masj", name: "Mas J", ready: true, cards: [], revealed: [], isBot: true },
+    { id: "bot_mangku", name: "Mangku", ready: true, cards: [], revealed: [], isBot: true },
+    { id: "bot_dontol", name: "Dontol", ready: true, cards: [], revealed: [], isBot: true }
   ];
-  await updateDoc(roomRef, { players: [...room.players, ...bots] });
+
+  // Tambahkan ke daftar pemain yang sudah ada
+  const playersBaru = [...room.players, ...bots];
+  
+  await updateDoc(roomRef, { players: playersBaru });
+  console.log("Bot berhasil ditambahkan!");
 };
+
 
 window.setReady = async () => {
   const snap = await getDoc(roomRef);
