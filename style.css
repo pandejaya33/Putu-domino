@@ -90,3 +90,38 @@ button {
  background:linear-gradient(45deg,#444,#222);
  border-radius:10px;
 }
+
+body{
+ font-family:Arial, sans-serif;
+ background:#0b6623;
+ color:white;
+ text-align:center;
+ margin:0;
+ padding:0;
+}
+
+.container{padding:15px;}
+
+.roomBox,.playerBox,.gameBox,.controlBox{
+ background:#145a32;
+ padding:10px;
+ margin:10px auto;
+ border-radius:10px;
+ width:90%;
+ max-width:400px;
+}
+
+button{
+ padding:8px 15px;
+ border:none;
+ border-radius:6px;
+ background:#f1c40f;
+ font-weight:bold;
+ margin-top:8px;
+}
+
+.kartuArea{
+ display:flex;
+ justify-content:center;
+ flex-wrap:wrap;
+}
