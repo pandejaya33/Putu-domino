@@ -147,3 +147,18 @@ window.mainLagi = async function () {
     started: true
   });
 };
+
+async function cekSemuaReadyDanMulai(room){
+ if(room.started) return;
+
+ let semuaReady = room.players.every(p=>p.ready);
+ if(!semuaReady) return;
+
+ let deck = buatDeck().sort(()=>Math.random()-0.5);
+
+ await updateDoc(roomRef,{
+   started:true,
+   deck:deck,
+   turn:0
+ });
+}
