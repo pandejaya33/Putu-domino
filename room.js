@@ -54,12 +54,29 @@ function renderPemain(players, turn) {
 // ================= TOMBOL READY =================
 window.setReady = async function () {
   const snap = await getDoc(roomRef);
+  if (!snap.exists()) return;
+
   let room = snap.data();
 
-  let me = room.players.find(p => p.id === myId);
-  me.ready = true;
+  // update ready saya
+  room.players = room.players.map(p => {
+    if (p.id === myId) {
+      return { ...p, ready: true };
+    }
+    return p;
+  });
 
-  await updateDoc(roomRef, { players: room.players });
+  // cek semua ready
+  const semuaReady = room.players.length > 0 && room.players.every(p => p.ready);
+
+  if (semuaReady) {
+    const deck = buatDeck().sort(() => Math.random() - 0.5);
+    room.started = true;
+    room.turn = 0;
+    room.deck = deck;
+  }
+
+  await updateDoc(roomRef, room);
 };
 
 
