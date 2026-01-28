@@ -2,25 +2,28 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Room Domino</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="container">
-    <div class="roomBox">Kode: <strong id="roomCode"></strong></div>
+    <div class="header">
+      Kode Room: <strong id="roomCode"></strong>
+    </div>
     
     <div class="playerBox">
       <div id="playerList"></div>
-      <button id="btnReady" onclick="setReady()">SIAP (READY)</button>
+      <button id="btnReady" onclick="setReady()">SIAP / READY</button>
     </div>
 
     <div class="gameBox">
+      <h3>Kartu Saya</h3>
       <div id="kartuSaya" class="kartuArea"></div>
-      <button id="btnAmbil" onclick="ambilKartu()" style="display:none; background:#3498db;">➕ AMBIL KARTU</button>
+      <button id="btnLanjut" onclick="ambilKartuLanjut()" style="display:none; background:#3b82f6; color:white;">🃏 AMBIL KARTU LANJUT</button>
     </div>
 
-    <button onclick="mainLagi()" style="background:#e67e22; margin-top:20px;">🔄 RESET GAME</button>
+    <button onclick="mainLagi()" style="background:#ef4444; color:white; margin-top:30px; font-size:12px; padding:10px;">🔄 RESET ROOM</button>
   </div>
   <script type="module" src="room.js"></script>
 </body>
