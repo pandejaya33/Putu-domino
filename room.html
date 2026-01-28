@@ -1,28 +1,34 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Domino Room</title>
-  <link rel="stylesheet" href="style.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Room Domino Online</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
-    <div class="header">ROOM: <span id="roomCode"></span></div>
-    
-    <div class="playerBox">
-      <div id="playerList"></div>
-      <button onclick="setReady()" style="background:#10b981; color:white;">SIAP (READY)</button>
-      <button id="btnBot" onclick="tambahBot()" style="background:#6366f1; color:white; margin-top:10px;">🤖 VS KOMPUTER</button>
+    <div class="container">
+        <h2 style="color: white; text-align: center;">🎴 ROOM DOMINO</h2>
+        <p style="color: #cbd5e1; text-align: center;">Kode Room: <span id="roomCode" style="font-weight: bold; color: white;">-</span></p>
+
+        <div class="playerBox">
+            <h3 style="color: white; margin-bottom: 10px;">Pemain di Room</h3>
+            <div id="playerList"></div>
+            
+            <button id="btnReady" onclick="setReady()" style="background: #10b981; color: white; margin-top: 10px;">SAYA SIAP (READY)</button>
+            <button id="btnBot" onclick="tambahBot()" style="background: #6366f1; color: white; margin-top: 10px;">🤖 TAMBAH PEMAIN BOT</button>
+        </div>
+
+        <div class="gameBox">
+            <h3 style="color: white;">Kartu Saya</h3>
+            <div id="kartuSaya" class="kartuArea"></div>
+            
+            <button id="btnLanjut" onclick="ambilKartuLanjut()" style="display:none; background: #3b82f6; color: white; margin-top: 20px;">+ AMBIL KARTU</button>
+        </div>
+
+        <button onclick="mainLagi()" style="background: #f59e0b; color: white; margin-top: 20px; font-size: 14px;">🔄 RESET / MAIN LAGI</button>
     </div>
 
-    <div class="gameBox">
-      <div id="kartuSaya" class="kartuArea"></div>
-      <button id="btnLanjut" onclick="ambilKartuLanjut()" style="display:none; background:#3b82f6; color:white; margin-top:20px;">🃏 + AMBIL KARTU</button>
-    </div>
-
-    <button onclick="mainLagi()" style="background:#475569; color:white; margin-top:40px; font-size:10px;">RESET GAME</button>
-  </div>
-  <script type="module" src="room.js"></script>
+    <script type="module" src="room.js?v=1"></script>
 </body>
 </html>
