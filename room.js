@@ -19,14 +19,16 @@ document.getElementById("roomCode").innerText = roomId;
 
 
 // ================= REALTIME LISTENER =================
-onSnapshot(roomRef, (snap) => {
-  if (!snap.exists()) return;
+onSnapshot(roomRef, async (snap) => {
+ if (!snap.exists()) return;
 
-  let room = snap.data();
-  playersData = room.players || [];
+ let room = snap.data();
+ playersData = room.players || [];
 
-  renderPemain(playersData, room.turn);
-  renderKartuSaya();
+ renderPemain(playersData, room.turn);
+ renderKartuSaya();
+
+ await cekSemuaReadyDanMulai(room); // ⬅️ TAMBAH INI
 });
 
 
