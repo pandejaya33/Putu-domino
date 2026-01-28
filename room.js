@@ -8,7 +8,7 @@ const myName = localStorage.getItem("playerName");
 const myMode = localStorage.getItem("mode") || "spirit";
 const roomRef = doc(db, "rooms", roomId);
 
-let kunciBagi = false; // Mencegah bagi kartu 2x
+let sedangBagi = false; // Kunci biar kartu pertama gak double
 
 async function initRoom() {
   const snap = await getDoc(roomRef);
@@ -58,30 +58,34 @@ onSnapshot(roomRef, (snap) => {
     });
   }
 
-  // ATURAN LIMIT KARTU (SPIRIT 3, BRERONG 4)
+  // --- LOGIKA REM (LIMIT) ---
   const maxKartu = room.mode === "spirit" ? 3 : 4;
   const btnLanjut = document.getElementById("btnLanjut");
   
-  // Tombol HILANG jika kartu sudah mencapai batas maksimal
+  // Tombol HANYA muncul kalau game sudah jalan DAN kartu belum penuh
   if (room.started && me && me.cards.length > 0 && me.cards.length < maxKartu) {
     btnLanjut.style.display = "block";
   } else {
     btnLanjut.style.display = "none";
   }
 
-  // BAGIKAN KARTU PERTAMA (DIPAKSA HANYA 1 KARTU)
+  // --- LOGIKA BAGI KARTU PERTAMA (PASTI 1) ---
   if (!room.started && room.players.length >= 2 && room.players.every(p => p.ready)) {
-    if (room.hostId === myId && !kunciBagi) {
-      kunciBagi = true; // Kunci biar tidak jalan 2x
-      const deck = [...room.deck];
-      const pBaru = room.players.map(p => {
-        const k = deck.pop();
-        return { ...p, cards: [`${k.left}|${k.right}`], revealed: [] };
-      });
-      updateDoc(roomRef, { started: true, players: pBaru, deck: deck });
+    if (room.hostId === myId && !sedangBagi) {
+      sedangBagi = true;
+      prosesMulai(room);
     }
   }
 });
+
+async function prosesMulai(room) {
+  let deck = [...room.deck];
+  const pBaru = room.players.map(p => {
+    const k = deck.pop(); 
+    return { ...p, cards: [`${k.left}|${k.right}`], revealed: [] };
+  });
+  await updateDoc(roomRef, { started: true, players: pBaru, deck: deck });
+}
 
 window.ambilKartuLanjut = async () => {
   const snap = await getDoc(roomRef);
@@ -91,7 +95,7 @@ window.ambilKartuLanjut = async () => {
   let players = [...room.players];
   const idx = players.findIndex(p => p.id === myId);
 
-  // CEK LAGI SUPAYA TIDAK BISA TEMBUS LIMIT
+  // Rem Terakhir: Cek jumlah kartu sebelum tambah ke database
   if (players[idx].cards.length < maxKartu) {
     const k = deck.pop();
     players[idx].cards.push(`${k.left}|${k.right}`);
