@@ -3,11 +3,11 @@ import { doc, onSnapshot, updateDoc, getDoc, setDoc } from "https://www.gstatic.
 import { buatDeck } from "./game.js";
 
 const roomId = localStorage.getItem("roomId");
-const myId = localStorage.getItem("playerId");
-const myName = localStorage.getItem("playerName");
+const myId = localStorage.getItem("playerId") || "p_" + Math.random().toString(36).substr(2, 9);
+const myName = localStorage.getItem("playerName") || "Guest";
 const myMode = localStorage.getItem("mode") || "spirit";
 
-if (!roomId || !myId) { window.location.href = "index.html"; }
+if (!localStorage.getItem("playerId")) localStorage.setItem("playerId", myId);
 
 const roomRef = doc(db, "rooms", roomId);
 document.getElementById("roomCode").innerText = roomId;
@@ -15,6 +15,7 @@ document.getElementById("roomCode").innerText = roomId;
 async function initRoom() {
   const snap = await getDoc(roomRef);
   const me = { id: myId, name: myName, ready: false, cards: [], revealed: [], isBot: false };
+
   if (!snap.exists()) {
     await setDoc(roomRef, { players: [me], started: false, deck: buatDeck(), mode: myMode });
   } else {
@@ -31,16 +32,16 @@ onSnapshot(roomRef, (snap) => {
   const room = snap.data();
   const me = room.players.find(p => p.id === myId);
 
-  // Update Daftar Pemain
+  // Render Daftar Pemain
   const list = document.getElementById("playerList");
   list.innerHTML = room.players.map(p => `
     <div class="player-item">
       <span>${p.isBot ? '🤖' : '👤'} ${p.name}</span> 
-      <span>${p.ready ? '✅' : '⏳'} (${p.cards.length} Krt)</span>
+      <span>${p.ready ? '✅' : '⏳'} (${p.cards.length})</span>
     </div>
   `).join("");
 
-  // Tampilkan Kartu Saya
+  // Render Kartu Saya
   const area = document.getElementById("kartuSaya");
   area.innerHTML = "";
   if (me && me.cards) {
@@ -62,20 +63,15 @@ onSnapshot(roomRef, (snap) => {
   // Tombol Lanjut
   const btnLanjut = document.getElementById("btnLanjut");
   const maxKartu = room.mode === "spirit" ? 3 : 4;
-  if (room.started && me && me.cards.length > 0 && me.cards.length < maxKartu) {
-    btnLanjut.style.display = "block";
-  } else {
-    btnLanjut.style.display = "none";
-  }
-
+  btnLanjut.style.display = (room.started && me && me.cards.length > 0 && me.cards.length < maxKartu) ? "block" : "none";
   document.getElementById("btnBot").style.display = room.started ? "none" : "block";
 
+  // Auto Start jika semua Ready
   if (!room.started && room.players.length >= 2 && room.players.every(p => p.ready)) {
     mulaiSesi(room);
   }
 });
 
-// FUNGSI TAMBAH KOMPUTER DENGAN NAMA KHUSUS
 window.tambahBot = async () => {
   const snap = await getDoc(roomRef);
   const room = snap.data();
@@ -99,7 +95,6 @@ async function mulaiSesi(room) {
   const deck = [...room.deck];
   const updatedPlayers = room.players.map(p => {
     const k = deck.pop();
-    // Bot otomatis buka kartu ke-1 agar bisa dipantau
     return { ...p, cards: [`${k.left}|${k.right}`], revealed: p.isBot ? [0] : [] };
   });
   await updateDoc(roomRef, { started: true, players: updatedPlayers, deck: deck });
@@ -122,7 +117,6 @@ window.ambilKartuLanjut = async () => {
       p.revealed.push(p.cards.length - 1); 
     }
   });
-
   await updateDoc(roomRef, { players, deck });
 };
 
