@@ -1,5 +1,5 @@
 import { db } from "./firebase.js";
-import { doc, onSnapshot, updateDoc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { doc, onSnapshot, updateDoc, getDoc, setDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { buatDeck } from "./game.js";
 
 const roomId = localStorage.getItem("roomId");
@@ -7,28 +7,34 @@ const myId = localStorage.getItem("playerId");
 const myName = localStorage.getItem("playerName");
 const roomRef = doc(db, "rooms", roomId);
 
-// Kunci lokal agar tidak menjalankan fungsi dua kali
 let pembagianSedangBerjalan = false;
 
+// 1. GABUNG ROOM TANPA MENGHAPUS YANG LAIN
 async function initRoom() {
   const snap = await getDoc(roomRef);
+  const me = { id: myId, name: myName, ready: false, cards: [], revealed: [], isBot: false };
+  
   if (!snap.exists()) {
+    // Jika room belum ada, buat baru
     await setDoc(roomRef, { 
-      players: [{ id: myId, name: myName, ready: false, cards: [], revealed: [] }], 
+      players: [me], 
       started: false, 
-      deck: buatDeck() 
+      deck: buatDeck(),
+      hostId: myId // Tandai pembuat room sebagai Host
     });
   } else {
+    // Jika room ada, tambah pemain ke array (tanpa menimpa)
     const room = snap.data();
     if (!room.players.find(p => p.id === myId)) {
       await updateDoc(roomRef, { 
-        players: [...room.players, { id: myId, name: myName, ready: false, cards: [], revealed: [] }] 
+        players: arrayUnion(me) 
       });
     }
   }
 }
 initRoom();
 
+// 2. MONITORING DATA
 onSnapshot(roomRef, (snap) => {
   if (!snap.exists()) return;
   const room = snap.data();
@@ -36,23 +42,23 @@ onSnapshot(roomRef, (snap) => {
 
   document.getElementById("roomCode").innerText = roomId;
   
-  // Tampilan List Pemain
+  // Tampilkan SEMUA Pemain
   const list = document.getElementById("playerList");
   list.innerHTML = room.players.map(p => `
     <div class="player-item">
       <span>${p.isBot ? '🤖' : '👤'} ${p.name}</span> 
-      <span>${p.ready ? '✅' : '⏳'} (${p.cards.length} kartu)</span>
+      <span>${p.ready ? '✅' : '⏳'} (${p.cards.length} krt)</span>
     </div>
   `).join("");
 
-  // Tampilan Kartu
+  // Tampilkan Kartu Saya
   const area = document.getElementById("kartuSaya");
   area.innerHTML = "";
   if (me && me.cards) {
     me.cards.forEach((c, i) => {
       const div = document.createElement("div");
       div.className = "dominoCard";
-      if (me.revealed && me.revealed.includes(i)) {
+      if (me.revealed?.includes(i)) {
         const [a, b] = c.split("|");
         div.innerHTML = `<div class="half">${drawDots(a)}</div><div class="divider"></div><div class="half">${drawDots(b)}</div>`;
       } else {
@@ -67,17 +73,16 @@ onSnapshot(roomRef, (snap) => {
   document.getElementById("btnLanjut").style.display = room.started ? "block" : "none";
   document.getElementById("btnBot").style.display = room.started ? "none" : "block";
 
-  // LOGIKA START: Hanya jalankan jika kamu adalah pemain pertama (Host) agar tidak bentrok
+  // LOGIKA BAGI KARTU (Hanya Host yang boleh eksekusi)
   if (!room.started && room.players.length >= 2 && room.players.every(p => p.ready)) {
-    if (room.players[0].id === myId && !pembagianSedangBerjalan) {
-      pembagianSedangBerjalan = true; 
+    if (room.hostId === myId && !pembagianSedangBerjalan) {
+      pembagianSedangBerjalan = true;
       eksekusiBagiSatuKartu(room);
     }
   }
 });
 
 async function eksekusiBagiSatuKartu(room) {
-  console.log("Membagikan 1 kartu...");
   let deck = [...room.deck];
   const playersBaru = room.players.map(p => {
     const k = deck.pop();
@@ -98,7 +103,8 @@ window.tambahBot = async () => {
     { id: "bot2", name: "Mangku", ready: true, cards: [], revealed: [], isBot: true },
     { id: "bot3", name: "Dontol", ready: true, cards: [], revealed: [], isBot: true }
   ];
-  await updateDoc(roomRef, { players: [...snap.data().players, ...bots] });
+  const room = snap.data();
+  await updateDoc(roomRef, { players: [...room.players, ...bots] });
 };
 
 window.setReady = async () => {
@@ -115,7 +121,6 @@ window.ambilKartuLanjut = async () => {
   let deck = [...room.deck];
   let players = [...room.players];
   
-  // Semua ambil 1 kartu tambahan
   players.forEach(p => {
     if (deck.length > 0) {
       const k = deck.pop();
@@ -123,7 +128,6 @@ window.ambilKartuLanjut = async () => {
       if (p.isBot) p.revealed.push(p.cards.length - 1);
     }
   });
-
   await updateDoc(roomRef, { players, deck });
 };
 
