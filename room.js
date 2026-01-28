@@ -58,22 +58,24 @@ window.setReady = async function () {
 
   let room = snap.data();
 
-  // update ready saya
-  room.players = room.players.map(p => {
-    if (p.id === myId) {
-      return { ...p, ready: true };
-    }
-    return p;
-  });
+  // cari index pemain berdasarkan nama yang disimpan
+  const myName = localStorage.getItem("playerName");
+
+  let index = room.players.findIndex(p => p.name === myName);
+  if (index === -1) {
+    alert("Player tidak ditemukan di room!");
+    return;
+  }
+
+  room.players[index].ready = true;
 
   // cek semua ready
-  const semuaReady = room.players.length > 0 && room.players.every(p => p.ready);
+  const semuaReady = room.players.every(p => p.ready);
 
   if (semuaReady) {
-    const deck = buatDeck().sort(() => Math.random() - 0.5);
     room.started = true;
     room.turn = 0;
-    room.deck = deck;
+    room.deck = buatDeck().sort(() => Math.random() - 0.5);
   }
 
   await updateDoc(roomRef, room);
