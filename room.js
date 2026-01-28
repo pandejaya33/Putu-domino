@@ -1,185 +1,139 @@
 import { db } from "./firebase.js";
 import {
-  doc,
-  onSnapshot,
-  updateDoc,
-  getDoc
+  doc, onSnapshot, updateDoc, getDoc, setDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { buatDeck } from "./game.js";
 
 const roomId = localStorage.getItem("roomId");
-const myId   = localStorage.getItem("playerId");
+const myId = localStorage.getItem("playerId");
+const myName = localStorage.getItem("playerName");
+
+if (!roomId || !myId) {
+  window.location.href = "index.html";
+}
 
 const roomRef = doc(db, "rooms", roomId);
 let playersData = [];
 
-
-// ================= TAMPILKAN KODE ROOM =================
 document.getElementById("roomCode").innerText = roomId;
 
+// DAFTARKAN DIRI KE ROOM
+async function initRoom() {
+  const snap = await getDoc(roomRef);
+  let pData = { id: myId, name: myName, ready: false, cards: [], revealed: [] };
 
-// ================= REALTIME LISTENER =================
-onSnapshot(roomRef, async (snap) => {
- if (!snap.exists()) return;
+  if (!snap.exists()) {
+    await setDoc(roomRef, {
+      players: [pData],
+      started: false,
+      turn: 0,
+      deck: []
+    });
+  } else {
+    let room = snap.data();
+    if (!room.players.find(p => p.id === myId)) {
+      room.players.push(pData);
+      await updateDoc(roomRef, { players: room.players });
+    }
+  }
+}
+initRoom();
 
- let room = snap.data();
- playersData = room.players || [];
+// LISTEN DATA REALTIME
+onSnapshot(roomRef, (snap) => {
+  if (!snap.exists()) return;
+  const room = snap.data();
+  playersData = room.players;
 
- renderPemain(playersData, room.turn);
- renderKartuSaya();
+  renderPemain(room.players, room.turn);
+  renderKartuSaya();
 
- await cekSemuaReadyDanMulai(room); // ⬅️ TAMBAH INI
+  if (!room.started) {
+    cekMulaiOtomatis(room);
+  }
 });
 
-
-// ================= RENDER DAFTAR PEMAIN =================
 function renderPemain(players, turn) {
   const list = document.getElementById("playerList");
   list.innerHTML = "";
-
   players.forEach((p, i) => {
-    let giliran = i === turn ? "🎯" : "";
-    let ready = p.ready ? "✅" : "⏳";
-
-    list.innerHTML += `
-      <div>
-        ${giliran} ${p.name} | Kartu:${p.cards.length} ${ready}
-      </div>
-    `;
+    let status = p.ready ? "✅" : "⏳";
+    let giliran = i === turn ? "🎯 " : "";
+    list.innerHTML += `<div style="margin:5px 0;">${giliran}${p.name} ${status}</div>`;
   });
 }
 
-
-
-// ================= TOMBOL READY =================
-window.setReady = async function () {
+window.setReady = async function() {
   const snap = await getDoc(roomRef);
-  if (!snap.exists()) return;
-
   let room = snap.data();
-
-  // cari index pemain berdasarkan nama yang disimpan
-  const myName = localStorage.getItem("playerName");
-
-  let index = room.players.findIndex(p => p.name === myName);
-  if (index === -1) {
-    alert("Player tidak ditemukan di room!");
-    return;
+  let idx = room.players.findIndex(p => p.id === myId);
+  if (idx !== -1) {
+    room.players[idx].ready = true;
+    await updateDoc(roomRef, { players: room.players });
   }
-
-  room.players[index].ready = true;
-
-  // cek semua ready
-  const semuaReady = room.players.every(p => p.ready);
-
-  if (semuaReady) {
-    room.started = true;
-    room.turn = 0;
-    room.deck = buatDeck().sort(() => Math.random() - 0.5);
-  }
-
-  await updateDoc(roomRef, room);
 };
 
+async function cekMulaiOtomatis(room) {
+  if (room.players.length < 2) return;
+  if (room.players.every(p => p.ready)) {
+    let deck = buatDeck();
+    let mode = localStorage.getItem("mode") || "spirit";
+    let jml = mode === "spirit" ? 2 : 4;
 
+    let updatedPlayers = room.players.map(p => {
+      let tangan = [];
+      for (let i = 0; i < jml; i++) {
+        let k = deck.pop();
+        tangan.push(`${k.left}|${k.right}`);
+      }
+      return { ...p, cards: tangan, ready: true };
+    });
 
-// ================= GAMBAR TITIK DOMINO =================
-function gambarTitik(n) {
-  const dots = {
-    0: [], 1: [5], 2: [1, 9], 3: [1, 5, 9],
-    4: [1, 3, 7, 9], 5: [1, 3, 5, 7, 9],
-    6: [1, 3, 4, 6, 7, 9]
-  };
-
-  let grid = "";
-  for (let i = 1; i <= 9; i++) {
-    grid += `<div class="dot ${dots[n].includes(i) ? "on" : ""}"></div>`;
+    await updateDoc(roomRef, {
+      started: true,
+      players: updatedPlayers,
+      deck: deck
+    });
   }
-  return `<div class="grid">${grid}</div>`;
 }
 
-
-
-// ================= RENDER KARTU SAYA =================
 function renderKartuSaya() {
   const area = document.getElementById("kartuSaya");
   area.innerHTML = "";
-
   let me = playersData.find(p => p.id === myId);
-  if (!me) return;
+  if (!me || !me.cards) return;
 
-  me.cards.forEach((card, i) => {
-    let opened = me.revealed?.includes(i);
+  me.cards.forEach((c, i) => {
+    let isOpen = me.revealed?.includes(i);
     let div = document.createElement("div");
     div.className = "dominoCard";
-
-    if (opened) {
-      let [a, b] = card.split("|").map(Number);
-      div.innerHTML = `
-        <div class="half">${gambarTitik(a)}</div>
-        <div class="divider"></div>
-        <div class="half">${gambarTitik(b)}</div>
-      `;
+    if (isOpen) {
+      let [a, b] = c.split("|").map(Number);
+      div.innerHTML = `<div class="half">${drawDots(a)}</div><div class="divider"></div><div class="half">${drawDots(b)}</div>`;
     } else {
       div.innerHTML = `<div class="back"></div>`;
     }
-
     div.onclick = () => bukaKartu(i);
     area.appendChild(div);
   });
 }
 
-
-
-// ================= BUKA KARTU =================
-window.bukaKartu = async function (index) {
+window.bukaKartu = async function(i) {
   const snap = await getDoc(roomRef);
   let room = snap.data();
-
-  let me = room.players.find(p => p.id === myId);
-  if (!me.revealed) me.revealed = [];
-
-  if (!me.revealed.includes(index)) me.revealed.push(index);
-
-  await updateDoc(roomRef, { players: room.players });
+  let pIdx = room.players.findIndex(p => p.id === myId);
+  if (!room.players[pIdx].revealed) room.players[pIdx].revealed = [];
+  if (!room.players[pIdx].revealed.includes(i)) {
+    room.players[pIdx].revealed.push(i);
+    await updateDoc(roomRef, { players: room.players });
+  }
 };
 
-
-
-// ================= MAIN LAGI =================
-window.mainLagi = async function () {
-  let deck = buatDeck().sort(() => Math.random() - 0.5);
-
-  let snap = await getDoc(roomRef);
-  let room = snap.data();
-
-  let players = room.players.map(p => ({
-    ...p,
-    cards: [],
-    revealed: [],
-    ready: false,
-    stand: false
-  }));
-
-  await updateDoc(roomRef, {
-    deck: deck,
-    players: players,
-    turn: 0,
-    started: true
-  });
-};
-
-async function cekSemuaReadyDanMulai(room){
- if(room.started) return;
-
- let semuaReady = room.players.every(p=>p.ready);
- if(!semuaReady) return;
-
- let deck = buatDeck().sort(()=>Math.random()-0.5);
-
- await updateDoc(roomRef,{
-   started:true,
-   deck:deck,
-   turn:0
- });
+function drawDots(n) {
+  const dots = { 0:[], 1:[5], 2:[1,9], 3:[1,5,9], 4:[1,3,7,9], 5:[1,3,5,7,9], 6:[1,3,4,6,7,9] };
+  let g = "";
+  for(let i=1; i<=9; i++) g += `<div class="dot ${dots[n].includes(i)?'on':''}"></div>`;
+  return `<div class="grid">${g}</div>`;
 }
+
+window.mainLagi = () => window.location.reload();
