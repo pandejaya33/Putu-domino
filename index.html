@@ -12,7 +12,15 @@
 
 <input id="nameInput" placeholder="Nama kamu" style="padding:10px;width:200px;"><br><br>
 <input id="roomInput" placeholder="Kode Room (jika gabung)" style="padding:10px;width:200px;"><br><br>
+const nama = document.getElementById("namaPlayer").value.trim();
 
+if(!nama){
+ alert("Masukkan nama dulu!");
+ return;
+}
+
+localStorage.setItem("playerName", nama);
+  
 <select id="modeSelect" style="padding:10px;width:220px;">
   <option value="spirit">Mode Spirit</option>
   <option value="brerong">Mode Brerong</option>
