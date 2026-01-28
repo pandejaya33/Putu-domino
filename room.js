@@ -8,29 +8,27 @@ const roomId = localStorage.getItem("roomId");
 const myId = localStorage.getItem("playerId");
 const myName = localStorage.getItem("playerName");
 
-if (!roomId || !myId) {
-  window.location.href = "index.html";
-}
+if (!roomId || !myId) { window.location.href = "index.html"; }
 
 const roomRef = doc(db, "rooms", roomId);
 let playersData = [];
 
 document.getElementById("roomCode").innerText = roomId;
 
-// DAFTARKAN DIRI KE ROOM
 async function initRoom() {
   const snap = await getDoc(roomRef);
   let pData = { id: myId, name: myName, ready: false, cards: [], revealed: [] };
 
   if (!snap.exists()) {
-    await setDoc(roomRef, {
-      players: [pData],
-      started: false,
-      turn: 0,
-      deck: []
-    });
+    await setDoc(roomRef, { players: [pData], started: false, turn: 0 });
   } else {
     let room = snap.data();
+    // Jika room sudah 'started', jangan biarkan orang baru masuk atau reset jika perlu
+    if (room.started && !room.players.find(p => p.id === myId)) {
+        alert("Game sedang jalan, tidak bisa masuk!");
+        window.location.href = "index.html";
+        return;
+    }
     if (!room.players.find(p => p.id === myId)) {
       room.players.push(pData);
       await updateDoc(roomRef, { players: room.players });
@@ -39,7 +37,6 @@ async function initRoom() {
 }
 initRoom();
 
-// LISTEN DATA REALTIME
 onSnapshot(roomRef, (snap) => {
   if (!snap.exists()) return;
   const room = snap.data();
@@ -48,18 +45,40 @@ onSnapshot(roomRef, (snap) => {
   renderPemain(room.players, room.turn);
   renderKartuSaya();
 
-  if (!room.started) {
-    cekMulaiOtomatis(room);
+  // Logika Mulai Otomatis
+  if (!room.started && room.players.length >= 2 && room.players.every(p => p.ready)) {
+    mulaiPermainan(room);
   }
 });
+
+async function mulaiPermainan(room) {
+    let deck = buatDeck();
+    let mode = localStorage.getItem("mode") || "spirit";
+    let jml = (mode === "spirit") ? 2 : 4;
+
+    let updatedPlayers = room.players.map(p => {
+      let tangan = [];
+      for (let i = 0; i < jml; i++) {
+        let k = deck.pop();
+        tangan.push(`${k.left}|${k.right}`);
+      }
+      return { ...p, cards: tangan, revealed: [] };
+    });
+
+    await updateDoc(roomRef, {
+      started: true,
+      players: updatedPlayers,
+      deck: deck,
+      turn: 0
+    });
+}
 
 function renderPemain(players, turn) {
   const list = document.getElementById("playerList");
   list.innerHTML = "";
   players.forEach((p, i) => {
-    let status = p.ready ? "✅" : "⏳";
-    let giliran = i === turn ? "🎯 " : "";
-    list.innerHTML += `<div style="margin:5px 0;">${giliran}${p.name} ${status}</div>`;
+    let status = p.ready ? "✅ Ready" : "⏳ Tunggu";
+    list.innerHTML += `<div style="padding:5px; border-bottom:1px solid #145a32;">${p.name} ${status}</div>`;
   });
 }
 
@@ -73,35 +92,11 @@ window.setReady = async function() {
   }
 };
 
-async function cekMulaiOtomatis(room) {
-  if (room.players.length < 2) return;
-  if (room.players.every(p => p.ready)) {
-    let deck = buatDeck();
-    let mode = localStorage.getItem("mode") || "spirit";
-    let jml = mode === "spirit" ? 2 : 4;
-
-    let updatedPlayers = room.players.map(p => {
-      let tangan = [];
-      for (let i = 0; i < jml; i++) {
-        let k = deck.pop();
-        tangan.push(`${k.left}|${k.right}`);
-      }
-      return { ...p, cards: tangan, ready: true };
-    });
-
-    await updateDoc(roomRef, {
-      started: true,
-      players: updatedPlayers,
-      deck: deck
-    });
-  }
-}
-
 function renderKartuSaya() {
   const area = document.getElementById("kartuSaya");
   area.innerHTML = "";
   let me = playersData.find(p => p.id === myId);
-  if (!me || !me.cards) return;
+  if (!me || !me.cards || me.cards.length === 0) return;
 
   me.cards.forEach((c, i) => {
     let isOpen = me.revealed?.includes(i);
@@ -136,4 +131,11 @@ function drawDots(n) {
   return `<div class="grid">${g}</div>`;
 }
 
-window.mainLagi = () => window.location.reload();
+window.mainLagi = async () => {
+    // Reset room ke awal
+    await updateDoc(roomRef, {
+        started: false,
+        players: playersData.map(p => ({...p, ready: false, cards: [], revealed: []})),
+        turn: 0
+    });
+};
