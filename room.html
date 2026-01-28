@@ -8,35 +8,21 @@
 </head>
 <body>
   <div class="container">
-    <div class="header">
-      ROOM ID: <span id="roomCode"></span>
-    </div>
+    <div class="header">ROOM ID: <span id="roomCode"></span></div>
     
     <div class="playerBox">
       <div id="playerList"></div>
       <button id="btnReady" onclick="setReady()">SIAP (READY)</button>
-      
-      <button id="btnBot" onclick="tambahBot()" style="background:#6366f1; color:white; margin-top:10px;">
-        🤖 VS MAS J, MANGKU, DONTOL
-      </button>
+      <button id="btnBot" onclick="tambahBot()" style="background:#6366f1; color:white; margin-top:10px;">🤖 VS MAS J, MANGKU, DONTOL</button>
     </div>
 
     <div class="gameBox">
-      <h3>Kartu Saya</h3>
       <div id="kartuSaya" class="kartuArea"></div>
-      
-      <button id="btnLanjut" onclick="ambilKartuLanjut()" style="display:none; background:#3b82f6; color:white; margin-top:20px;">
-        🃏 KARTU BERIKUTNYA
-      </button>
+      <button id="btnLanjut" onclick="ambilKartuLanjut()" style="display:none; background:#3b82f6; color:white; margin-top:20px;">🃏 KARTU BERIKUTNYA</button>
     </div>
 
-    <div style="display:flex; justify-content:center;">
-      <button onclick="mainLagi()" style="background:#475569; color:white; width:auto; padding:8px 20px; font-size:12px; margin-top:20px;">
-        🔄 RESET ROOM
-      </button>
-    </div>
+    <button onclick="mainLagi()" style="background:#475569; color:white; width:auto; padding:8px 20px; font-size:11px; margin-top:20px; border-radius:10px;">RESET ROOM</button>
   </div>
-
   <script type="module" src="room.js"></script>
 </body>
 </html>
