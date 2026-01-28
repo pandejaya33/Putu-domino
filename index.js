@@ -1,32 +1,33 @@
-function randomRoom(){
-  return Math.random().toString(36).substring(2,7);
+function generateId() {
+  return Math.random().toString(36).substring(2, 9);
 }
 
-window.buatRoom = function(){
-  const name = nameInput.value;
-  const mode = modeSelect.value;
-  if(!name) return alert("Isi nama");
+window.buatRoom = function() {
+  const name = document.getElementById("nameInput").value;
+  const mode = document.getElementById("modeSelect").value;
+  if (!name) return alert("Nama tidak boleh kosong!");
 
-  localStorage.setItem("playerName", nama);
-  
-  const roomId = randomRoom();
+  const roomId = Math.random().toString(36).substring(2, 7);
+  const playerId = generateId();
 
-  localStorage.setItem("playerName",name);
-  localStorage.setItem("roomId",roomId);
-  localStorage.setItem("mode",mode);
+  localStorage.setItem("playerName", name);
+  localStorage.setItem("playerId", playerId);
+  localStorage.setItem("roomId", roomId);
+  localStorage.setItem("mode", mode);
 
-  window.location.href="room.html";
+  window.location.href = "room.html";
 };
 
-window.gabungRoom = function(){
-  const name = nameInput.value;
-  const roomId = roomInput.value;
-  if(!name || !roomId) return alert("Isi semua");
+window.gabungRoom = function() {
+  const name = document.getElementById("nameInput").value;
+  const roomId = document.getElementById("roomInput").value;
+  if (!name || !roomId) return alert("Isi nama dan kode room!");
 
-  localStorage.setItem("playerName", nama);
-  
-  localStorage.setItem("playerName",name);
-  localStorage.setItem("roomId",roomId);
+  const playerId = generateId();
 
-  window.location.href="room.html";
+  localStorage.setItem("playerName", name);
+  localStorage.setItem("playerId", playerId);
+  localStorage.setItem("roomId", roomId);
+
+  window.location.href = "room.html";
 };
