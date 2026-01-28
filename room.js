@@ -12,7 +12,7 @@ if (!roomId || !myId) { window.location.href = "index.html"; }
 const roomRef = doc(db, "rooms", roomId);
 document.getElementById("roomCode").innerText = roomId;
 
-// 1. GABUNG KE ROOM (SINKRON)
+// 1. GABUNG KE ROOM
 async function initRoom() {
   const snap = await getDoc(roomRef);
   const me = { id: myId, name: myName, ready: false, cards: [], revealed: [] };
@@ -28,17 +28,17 @@ async function initRoom() {
 }
 initRoom();
 
-// 2. MONITOR PERUBAHAN (REALTIME)
+// 2. MONITOR DATA REALTIME
 onSnapshot(roomRef, (snap) => {
   if (!snap.exists()) return;
   const room = snap.data();
   const me = room.players.find(p => p.id === myId);
 
-  // Update Daftar Pemain (Nama Teman Harus Muncul di Sini)
+  // Update Daftar Pemain
   const list = document.getElementById("playerList");
   list.innerHTML = room.players.map(p => `
     <div class="player-item">
-      <span>${p.name}</span> <span>${p.ready ? '✅ Ready' : '⏳'}</span>
+      <span>${p.name}</span> <span>${p.ready ? '✅' : '⏳'} (${p.cards.length} Kartu)</span>
     </div>
   `).join("");
 
@@ -62,16 +62,17 @@ onSnapshot(roomRef, (snap) => {
     });
   }
 
-  // Tampilkan Tombol Lanjut (Setelah kartu 1 ada & belum maksimal)
+  // Logika Tombol Lanjut (Hanya muncul jika sudah mulai dan kartu belum maksimal)
   const btnLanjut = document.getElementById("btnLanjut");
   const maxKartu = room.mode === "spirit" ? 3 : 4;
+  
   if (room.started && me && me.cards.length > 0 && me.cards.length < maxKartu) {
     btnLanjut.style.display = "block";
   } else {
     btnLanjut.style.display = "none";
   }
 
-  // Mulai Sesi Otomatis jika semua Ready
+  // Mulai Game (Bagikan Kartu Ke-1) jika SEMUA pemain di room menekan READY
   if (!room.started && room.players.length >= 2 && room.players.every(p => p.ready)) {
     mulaiSesi(room);
   }
@@ -87,6 +88,7 @@ window.setReady = async () => {
   await updateDoc(roomRef, { players });
 };
 
+// BAGIKAN HANYA 1 KARTU DI AWAL
 async function mulaiSesi(room) {
   const deck = [...room.deck];
   const updatedPlayers = room.players.map(p => {
@@ -96,6 +98,7 @@ async function mulaiSesi(room) {
   await updateDoc(roomRef, { started: true, players: updatedPlayers, deck: deck });
 }
 
+// AMBIL KARTU LANJUTAN (SATU PER SATU)
 window.ambilKartuLanjut = async () => {
   const snap = await getDoc(roomRef);
   const room = snap.data();
@@ -119,7 +122,7 @@ window.bukaKartu = async (i) => {
   if (!players[idx].revealed) players[idx].revealed = [];
   if (!players[idx].revealed.includes(i)) {
     players[idx].revealed.push(i);
-    await updateDoc(roomRef, { players });
+    await updateDoc(roomRef, { players: players });
   }
 };
 
