@@ -1,5 +1,5 @@
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: -apple-system, sans-serif;
   background: #0b6623;
   color: white;
   text-align: center;
@@ -7,41 +7,59 @@ body {
   padding: 10px;
 }
 
-.container { max-width: 500px; margin: auto; }
+.container { max-width: 450px; margin: auto; }
 
-.roomBox, .playerBox, .gameBox {
-  background: rgba(0,0,0,0.2);
+.roomBox, .playerBox, .gameBox, .controlBox {
+  background: rgba(0,0,0,0.25);
   padding: 15px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   border-radius: 12px;
 }
 
-.dominoCard {
-  width: 65px;
-  height: 110px;
-  background: white;
+.player-item {
+  background: rgba(255,255,255,0.1);
+  margin: 8px 0;
+  padding: 10px;
   border-radius: 8px;
-  margin: 5px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+}
+
+.dominoCard {
+  width: 60px;
+  height: 105px;
+  background: white;
+  border-radius: 6px;
+  margin: 6px;
   display: inline-flex;
   flex-direction: column;
   align-items: center;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.4);
 }
 
 .half { flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; }
-.divider { width: 80%; height: 2px; background: #333; }
-.grid { width: 45px; height: 45px; display: grid; grid-template-columns: repeat(3, 1fr); }
-.dot { width: 8px; height: 8px; border-radius: 50%; margin: auto; }
+.divider { width: 85%; height: 2px; background: #222; }
+.grid { width: 40px; height: 40px; display: grid; grid-template-columns: repeat(3, 1fr); }
+.dot { width: 7px; height: 7px; border-radius: 50%; margin: auto; }
 .dot.on { background: black; }
-.back { width: 100%; height: 100%; background: linear-gradient(135deg, #444, #111); border-radius: 8px; }
+.back { width: 100%; height: 100%; background: linear-gradient(135deg, #333, #000); border-radius: 6px; border: 2px solid #555; }
 
 button {
   background: #f1c40f;
+  color: #000;
   border: none;
-  padding: 12px 25px;
-  border-radius: 8px;
+  padding: 14px;
+  border-radius: 10px;
   font-weight: bold;
-  font-size: 16px;
+  font-size: 15px;
   width: 100%;
-  margin-top: 10px;
+  cursor: pointer;
+}
+
+.kartuArea {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  min-height: 120px;
 }
