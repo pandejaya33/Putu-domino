@@ -7,31 +7,21 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-
   <div class="container">
-    <h2>🎴 ROOM DOMINO</h2>
-
-    <div class="roomBox">
-      Kode Room: <strong id="roomCode"></strong>
-    </div>
-
+    <div class="roomBox">Kode: <strong id="roomCode"></strong></div>
+    
     <div class="playerBox">
-      <h3>Pemain di Room</h3>
       <div id="playerList"></div>
-      <button id="btnReady" onclick="setReady()">SIAP / READY</button>
+      <button id="btnReady" onclick="setReady()">SIAP (READY)</button>
     </div>
 
     <div class="gameBox">
-      <h3>Kartu Saya</h3>
       <div id="kartuSaya" class="kartuArea"></div>
-      <button id="btnAmbil" onclick="ambilKartu()" style="display:none; background:#3498db; margin-top:20px;">➕ AMBIL KARTU</button>
+      <button id="btnAmbil" onclick="ambilKartu()" style="display:none; background:#3498db;">➕ AMBIL KARTU</button>
     </div>
 
-    <div class="controlBox">
-      <button onclick="mainLagi()" style="background:#e67e22;">🔄 Reset / Main Lagi</button>
-    </div>
+    <button onclick="mainLagi()" style="background:#e67e22; margin-top:20px;">🔄 RESET GAME</button>
   </div>
-
   <script type="module" src="room.js"></script>
 </body>
 </html>
