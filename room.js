@@ -116,3 +116,28 @@ async function nextTurn(deck){
  await updateDoc(roomRef,{turn:next,deck});
 }
 
+window.mainLagi = async function(){
+
+ const roomRef = doc(db,"rooms",roomId);
+ const snap = await getDoc(roomRef);
+ let room = snap.data();
+
+ // buat deck baru
+ let deck = buatDeck().sort(()=>Math.random()-0.5);
+
+ // reset semua pemain
+ let players = room.players.map(p=>({
+   ...p,
+   cards:[],
+   revealed:[],
+   ready:false,
+   stand:false
+ }));
+
+ await updateDoc(roomRef,{
+   deck:deck,
+   players:players,
+   turn:0,
+   started:true
+ });
+}
