@@ -12,11 +12,9 @@ if (!roomId || !myId) { window.location.href = "index.html"; }
 const roomRef = doc(db, "rooms", roomId);
 document.getElementById("roomCode").innerText = roomId;
 
-// 1. GABUNG KE ROOM
 async function initRoom() {
   const snap = await getDoc(roomRef);
-  const me = { id: myId, name: myName, ready: false, cards: [], revealed: [] };
-
+  const me = { id: myId, name: myName, ready: false, cards: [], revealed: [], isBot: false };
   if (!snap.exists()) {
     await setDoc(roomRef, { players: [me], started: false, deck: buatDeck(), mode: myMode });
   } else {
@@ -28,7 +26,6 @@ async function initRoom() {
 }
 initRoom();
 
-// 2. MONITOR DATA REALTIME
 onSnapshot(roomRef, (snap) => {
   if (!snap.exists()) return;
   const room = snap.data();
@@ -38,11 +35,12 @@ onSnapshot(roomRef, (snap) => {
   const list = document.getElementById("playerList");
   list.innerHTML = room.players.map(p => `
     <div class="player-item">
-      <span>${p.name}</span> <span>${p.ready ? '✅' : '⏳'} (${p.cards.length} Kartu)</span>
+      <span>${p.isBot ? '🤖' : '👤'} ${p.name}</span> 
+      <span>${p.ready ? '✅' : '⏳'} (${p.cards.length} Krt)</span>
     </div>
   `).join("");
 
-  // Tampilkan Kartu
+  // Tampilkan Kartu Saya
   const area = document.getElementById("kartuSaya");
   area.innerHTML = "";
   if (me && me.cards) {
@@ -50,7 +48,6 @@ onSnapshot(roomRef, (snap) => {
       const div = document.createElement("div");
       div.className = "dominoCard";
       const isOpened = me.revealed?.includes(i);
-      
       if (isOpened) {
         const [a, b] = c.split("|");
         div.innerHTML = `<div class="half">${drawDots(a)}</div><div class="divider"></div><div class="half">${drawDots(b)}</div>`;
@@ -62,67 +59,81 @@ onSnapshot(roomRef, (snap) => {
     });
   }
 
-  // Logika Tombol Lanjut (Hanya muncul jika sudah mulai dan kartu belum maksimal)
+  // Tombol Lanjut
   const btnLanjut = document.getElementById("btnLanjut");
   const maxKartu = room.mode === "spirit" ? 3 : 4;
-  
   if (room.started && me && me.cards.length > 0 && me.cards.length < maxKartu) {
     btnLanjut.style.display = "block";
   } else {
     btnLanjut.style.display = "none";
   }
 
-  // Mulai Game (Bagikan Kartu Ke-1) jika SEMUA pemain di room menekan READY
+  document.getElementById("btnBot").style.display = room.started ? "none" : "block";
+
   if (!room.started && room.players.length >= 2 && room.players.every(p => p.ready)) {
     mulaiSesi(room);
   }
 });
 
-// 3. FUNGSI AKSI
-window.setReady = async () => {
+// FUNGSI TAMBAH KOMPUTER DENGAN NAMA KHUSUS
+window.tambahBot = async () => {
   const snap = await getDoc(roomRef);
   const room = snap.data();
-  const players = [...room.players];
+  const bots = [
+    { id: "bot1", name: "Mas J", ready: true, cards: [], revealed: [], isBot: true },
+    { id: "bot2", name: "Mangku", ready: true, cards: [], revealed: [], isBot: true },
+    { id: "bot3", name: "Dontol", ready: true, cards: [], revealed: [], isBot: true }
+  ];
+  await updateDoc(roomRef, { players: [...room.players, ...bots] });
+};
+
+window.setReady = async () => {
+  const snap = await getDoc(roomRef);
+  const players = [...snap.data().players];
   const idx = players.findIndex(p => p.id === myId);
   players[idx].ready = true;
   await updateDoc(roomRef, { players });
 };
 
-// BAGIKAN HANYA 1 KARTU DI AWAL
 async function mulaiSesi(room) {
   const deck = [...room.deck];
   const updatedPlayers = room.players.map(p => {
     const k = deck.pop();
-    return { ...p, cards: [`${k.left}|${k.right}`], revealed: [] };
+    // Bot otomatis buka kartu ke-1 agar bisa dipantau
+    return { ...p, cards: [`${k.left}|${k.right}`], revealed: p.isBot ? [0] : [] };
   });
   await updateDoc(roomRef, { started: true, players: updatedPlayers, deck: deck });
 }
 
-// AMBIL KARTU LANJUTAN (SATU PER SATU)
 window.ambilKartuLanjut = async () => {
   const snap = await getDoc(roomRef);
   const room = snap.data();
-  const deck = [...room.deck];
-  const players = [...room.players];
-  const idx = players.findIndex(p => p.id === myId);
+  let deck = [...room.deck];
+  let players = [...room.players];
   
-  if (deck.length > 0) {
-    const k = deck.pop();
-    players[idx].cards.push(`${k.left}|${k.right}`);
-    await updateDoc(roomRef, { players, deck });
-  }
+  const myIdx = players.findIndex(p => p.id === myId);
+  const kMe = deck.pop();
+  players[myIdx].cards.push(`${kMe.left}|${kMe.right}`);
+
+  players.forEach(p => {
+    if (p.isBot && deck.length > 0) {
+      const kBot = deck.pop();
+      p.cards.push(`${kBot.left}|${kBot.right}`);
+      p.revealed.push(p.cards.length - 1); 
+    }
+  });
+
+  await updateDoc(roomRef, { players, deck });
 };
 
 window.bukaKartu = async (i) => {
   const snap = await getDoc(roomRef);
-  const room = snap.data();
-  const players = [...room.players];
+  const players = [...snap.data().players];
   const idx = players.findIndex(p => p.id === myId);
-  
   if (!players[idx].revealed) players[idx].revealed = [];
   if (!players[idx].revealed.includes(i)) {
     players[idx].revealed.push(i);
-    await updateDoc(roomRef, { players: players });
+    await updateDoc(roomRef, { players });
   }
 };
 
