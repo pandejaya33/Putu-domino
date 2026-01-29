@@ -8,13 +8,11 @@ const myName = localStorage.getItem("playerName");
 const roomRef = doc(db, "rooms", roomId);
 
 async function initRoom() {
-    console.log("Inisialisasi room...");
     const snap = await getDoc(roomRef);
     const me = { id: myId, name: myName, ready: false, cards: [], isBot: false };
-    
     if (!snap.exists()) {
-        const modePilihan = localStorage.getItem("mode") || "spirit";
-        await setDoc(roomRef, { players: [me], started: false, deck: buatDeck(), hostId: myId, mode: modePilihan });
+        const mode = localStorage.getItem("mode") || "spirit";
+        await setDoc(roomRef, { players: [me], started: false, deck: buatDeck(), hostId: myId, mode: mode });
     } else {
         const room = snap.data();
         if (!room.players.find(p => p.id === myId)) {
@@ -24,36 +22,52 @@ async function initRoom() {
 }
 initRoom();
 
+// Fungsi Helper untuk membuat Titik Domino (Dots)
+function createDots(num) {
+    const positions = {
+        0: [],
+        1: ['center'],
+        2: ['top-right', 'bottom-left'],
+        3: ['top-right', 'center', 'bottom-left'],
+        4: ['top-left', 'top-right', 'bottom-left', 'bottom-right'],
+        5: ['top-left', 'top-right', 'center', 'bottom-left', 'bottom-right'],
+        6: ['top-left', 'top-right', 'mid-left', 'mid-right', 'bottom-left', 'bottom-right']
+    };
+    return positions[num].map(pos => `<div class="dot ${pos}"></div>`).join('');
+}
+
 onSnapshot(roomRef, (snap) => {
     if (!snap.exists()) return;
     const room = snap.data();
     const me = room.players.find(p => p.id === myId);
 
-    // Update Header
-    document.getElementById("roomCode").innerText = `${roomId} - MODE: ${room.mode.toUpperCase()}`;
+    document.getElementById("roomCode").innerText = `${roomId} - ${room.mode.toUpperCase()}`;
 
-    // List Pemain
+    // List Pemain (Perbaikan Bot agar tidak gabung)
     document.getElementById("playerList").innerHTML = room.players.map(p => `
-        <div style="background:rgba(255,255,255,0.1); padding:10px; margin:5px; border-radius:8px; display:flex; justify-content:space-between; color:white;">
+        <div style="background:rgba(255,255,255,0.1); padding:10px; margin:5px; border-radius:10px; display:flex; justify-content:space-between; color:white;">
             <span>${p.isBot ? '🤖' : '👤'} ${p.name}</span>
-            <span>${p.ready ? '✅ READY' : '⏳ WAIT'} (${p.cards.length})</span>
+            <span>${p.ready ? '✅' : '⏳'} (${p.cards.length} krt)</span>
         </div>
     `).join("");
 
-    // Visual Kartu Sesuai Permintaan (Warna Putih, Angka Merah)
+    // Visual Kartu (Kuning, Titik Merah seperti foto)
     const area = document.getElementById("kartuSaya");
     area.innerHTML = "";
     if (me?.cards) {
         me.cards.forEach((c) => {
             const [top, bottom] = c.split("|");
             const div = document.createElement("div");
-            div.style.cssText = "background:white; color:red; width:60px; height:100px; border-radius:8px; border:2px solid #000; font-size:28px; display:flex; flex-direction:column; align-items:center; justify-content:center; font-weight:bold; margin:5px; box-shadow: 0 4px 8px rgba(0,0,0,0.3);";
-            div.innerHTML = `<div>${top}</div><div style="width:100%; height:2px; background:black;"></div><div>${bottom}</div>`;
+            div.className = "domino-card-real";
+            div.innerHTML = `
+                <div class="half">${createDots(parseInt(top))}</div>
+                <div class="line"></div>
+                <div class="half">${createDots(parseInt(bottom))}</div>
+            `;
             area.appendChild(div);
         });
     }
 
-    // Limit Aturan (Spirit 3, Bererong 4)
     const limit = room.mode === "spirit" ? 3 : 4;
     const btnLanjut = document.getElementById("btnLanjut");
     if (room.started && me && me.cards.length > 0 && me.cards.length < limit) {
@@ -62,10 +76,8 @@ onSnapshot(roomRef, (snap) => {
         btnLanjut.style.display = "none";
     }
 
-    // Auto-Start jika 2+ pemain & semua ready
     if (!room.started && room.players.length >= 2 && room.players.every(p => p.ready)) {
         if (room.hostId === myId) {
-            console.log("Memulai pembagian kartu...");
             let deck = [...room.deck];
             const pUpdate = room.players.map(p => {
                 const k = deck.pop();
@@ -76,46 +88,34 @@ onSnapshot(roomRef, (snap) => {
     }
 });
 
-// Tombol SIAP (READY)
+// Fungsi Tombol
 window.setReady = async () => {
-    console.log("Klik tombol Ready");
     const snap = await getDoc(roomRef);
     let p = [...snap.data().players];
     const idx = p.findIndex(x => x.id === myId);
     if (idx !== -1) {
         p[idx].ready = true;
-        await updateDoc(roomRef, { players: p }).then(() => console.log("Berhasil Ready"));
+        await updateDoc(roomRef, { players: p });
     }
 };
 
-// Tombol Tambah Bot
 window.tambahBot = async () => {
-    console.log("Klik tombol Bot");
-    const daftarBot = ["Mas J", "Mangku", "Dontol"];
+    const names = ["Mas J", "Mangku", "Dontol"];
     const snap = await getDoc(roomRef);
     const room = snap.data();
-    const jumlahBot = room.players.filter(p => p.isBot).length;
-
-    if (jumlahBot < daftarBot.length) {
-        const botBaru = { 
-            id: "bot_" + Math.random().toString(36).substr(2, 5), 
-            name: daftarBot[jumlahBot], 
-            ready: true, 
-            cards: [], 
-            isBot: true 
-        };
-        await updateDoc(roomRef, { players: arrayUnion(botBaru) }).then(() => console.log("Bot berhasil masuk"));
+    const count = room.players.filter(p => p.isBot).length;
+    if (count < names.length) {
+        const bot = { id: "bot_"+Date.now(), name: names[count], ready: true, cards: [], isBot: true };
+        await updateDoc(roomRef, { players: arrayUnion(bot) });
     }
 };
 
-// Ambil Kartu Lanjut
 window.ambilKartuLanjut = async () => {
     const snap = await getDoc(roomRef);
     const room = snap.data();
     const limit = room.mode === "spirit" ? 3 : 4;
     let p = [...room.players];
     const idx = p.findIndex(x => x.id === myId);
-
     if (p[idx].cards.length < limit) {
         let deck = [...room.deck];
         const k = deck.pop();
