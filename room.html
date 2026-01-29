@@ -1,30 +1,4 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Domino Room Fix</title>
-    <link rel="stylesheet" href="style_v2.css">
-</head>
-<body style="background: #0b0f1a !important;">
-    <div class="container" style="border: 2px solid #2563eb; padding: 15px; border-radius: 15px;">
-        <h2 style="color: white; text-align: center;">🎴 DOMINO ROOM V2</h2>
-        
-        <div class="playerBox">
-            <div id="playerList" style="min-height: 50px;"></div>
-            <button onclick="setReady()" style="background: #10b981; color: white; width: 100%; padding: 12px; border-radius: 10px; margin-top: 10px;">SIAP (READY)</button>
-            
-            <button onclick="tambahBot()" style="background: #6366f1; color: white; width: 100%; padding: 12px; border-radius: 10px; margin-top: 10px;">🤖 VS MAS J & MANGKU</button>
-        </div>
-
-        <div class="gameBox" style="margin-top: 20px;">
-            <div id="kartuSaya" class="kartuArea"></div>
-            <button id="btnLanjut" onclick="ambilKartuLanjut()" style="display:none; background: #2563eb; color: white; width: 100%; padding: 15px; border-radius: 10px;">🃏 + AMBIL KARTU</button>
-        </div>
-
-        <button onclick="mainLagi()" style="background: #ef4444; color: white; margin-top: 40px; width: 100%; font-size: 10px;">RESET GAME</button>
-    </div>
-
-    <script type="module" src="room_v2.js"></script>
-</body>
-</html>
+<h2 id="roomTitle">DOMINO ROOM V2</h2>
+<p>KODE: <span id="roomCode">Menghubungkan...</span></p> <div id="playerList"></div> <div id="kartuSaya" class="kartuArea"></div> <button id="btnReady" onclick="setReady()">SIAP (READY)</button>
+<button id="btnBot" onclick="tambahBot()">🤖 VS MAS J & MANGKU</button>
+<button id="btnLanjut" onclick="ambilKartuLanjut()" style="display:none;">+ AMBIL KARTU</button>
