@@ -2,60 +2,62 @@ import { db } from "./firebase.js";
 import { doc, onSnapshot, updateDoc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { buatDeck } from "./game.js";
 
-const roomId = localStorage.getItem("roomId");
-const myId = localStorage.getItem("playerId");
-const myName = localStorage.getItem("playerName") || "Player";
-const isVsBot = localStorage.getItem("gameType") === "vs_bot";
+const rId = localStorage.getItem("roomId");
+const pId = localStorage.getItem("playerId");
+const pName = localStorage.getItem("playerName");
 
-const roomRef = doc(db, "rooms", roomId);
+if (!rId || !pName) { window.location.href = "index.html"; }
 
-// Hubungkan tombol HTML ke fungsi JavaScript
-window.setReady = async () => {
+const roomRef = doc(db, "rooms", rId);
+
+// Inisialisasi Room
+(async () => {
     const snap = await getDoc(roomRef);
-    if (!snap.exists()) return;
-    let players = [...snap.data().players];
-    const idx = players.findIndex(p => p.id === myId);
-    if (idx !== -1) {
-        players[idx].ready = true;
-        await updateDoc(roomRef, { players });
-        
-        // Cek jika semua sudah ready
-        if (players.every(p => p.ready)) {
-            const deck = buatDeck();
-            const mode = localStorage.getItem("mode") || "spirit";
-            const jml = mode === "bererong" ? 4 : 3;
-            
-            const updated = players.map(p => ({
-                ...p, cards: deck.splice(0, jml)
-            }));
-            await updateDoc(roomRef, { players: updated, started: true });
+    if (!snap.exists()) {
+        await setDoc(roomRef, { players: [{id: pId, name: pName, ready: false, cards: []}], started: false });
+    } else {
+        let players = snap.data().players || [];
+        if (!players.find(p => p.id === pId)) {
+            players.push({id: pId, name: pName, ready: false, cards: []});
+            await updateDoc(roomRef, { players });
         }
+    }
+})();
+
+// Fungsi Tombol Ready
+document.getElementById('readyBtn').onclick = async () => {
+    const snap = await getDoc(roomRef);
+    let players = [...snap.data().players];
+    const idx = players.findIndex(p => p.id === pId);
+    players[idx].ready = true;
+
+    if (players.every(p => p.ready) && players.length >= 1) {
+        const deck = buatDeck();
+        players.forEach(p => { p.cards = deck.splice(0, 3); });
+        await updateDoc(roomRef, { players, started: true });
+    } else {
+        await updateDoc(roomRef, { players });
     }
 };
 
-window.resetGame = async () => {
-    await updateDoc(roomRef, { started: false, players: [] });
-    window.location.reload();
-};
-
-// Pantau Perubahan Data
+// Pantau Perubahan
 onSnapshot(roomRef, (snap) => {
     if (!snap.exists()) return;
     const data = snap.data();
     
-    // Tampilkan List Pemain
+    document.getElementById("roomCodeDisplay").innerText = `KODE: ${rId}`;
+    
     const list = document.getElementById("playerList");
     list.innerHTML = data.players.map(p => `
-        <div class="player-card">
+        <div class="player-card" style="border: 1px solid ${p.ready ? '#ffd700' : '#555'}">
             <span>${p.name} ${p.ready ? '✅' : '⏳'}</span>
-            <span>${p.cards ? p.cards.length : 0} Kartu</span>
+            <span>${p.cards ? p.cards.length : 0} KRT</span>
         </div>
     `).join('');
 
-    // MUNCULKAN KARTU KUNING JIKA SUDAH MULAI
     const area = document.getElementById("myCardsArea");
-    const me = data.players.find(p => p.id === myId);
-    if (data.started && me && me.cards) {
+    const me = data.players.find(p => p.id === pId);
+    if (data.started && me && me.cards.length > 0) {
         area.innerHTML = me.cards.map(c => `
             <div class="domino-card-real">
                 <div class="top">${c.left}</div>
@@ -63,7 +65,5 @@ onSnapshot(roomRef, (snap) => {
                 <div class="bottom">${c.right}</div>
             </div>
         `).join('');
-    } else {
-        area.innerHTML = "";
     }
 });
