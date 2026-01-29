@@ -11,16 +11,16 @@
         <div class="login-box">
             <h1 class="title-mystic">🎴 DOMINO MYSTIC</h1>
             
-            <input type="text" id="playerName" placeholder="Nama Kamu">
-            <input type="text" id="joinCode" placeholder="Kode Room (jika gabung)">
+            <input type="text" id="playerName" placeholder="Input Nama Kamu (Wajib)">
+            <input type="text" id="joinCode" placeholder="Kode Room (untuk gabung)">
             
             <select id="mode">
                 <option value="spirit">Mode Spirit (3 Kartu)</option>
                 <option value="bererong">Mode Bererong (4 Kartu)</option>
             </select>
 
-            <label style="color: white; display: flex; align-items: center; justify-content: center; gap: 10px; margin: 15px 0; cursor: pointer;">
-                <input type="checkbox" id="vsBot" style="width: 20px; height: 20px;"> Main vs Komputer
+            <label style="color: white; display: flex; align-items: center; justify-content: center; gap: 8px; margin: 15px 0;">
+                <input type="checkbox" id="vsBot" style="width: 20px; height: 20px;"> Main vs Mas J
             </label>
 
             <button id="btnBuat" class="btn-gold">BUAT ROOM</button>
@@ -31,22 +31,27 @@
     <script type="module">
         import { buatRoom, gabungRoom } from "./game.js";
 
-        // Hubungkan tombol ke fungsi JavaScript
         document.getElementById('btnBuat').onclick = () => {
-            simpanDataKeLocal();
+            const name = document.getElementById("playerName").value.trim();
+            if(!name) return alert("Eits! Nama tidak boleh kosong ya.");
+            
+            saveData(name);
             buatRoom();
         };
 
         document.getElementById('btnGabung').onclick = () => {
-            const code = document.getElementById("joinCode").value;
-            if(!code) return alert("Masukkan Kode Room!");
-            localStorage.setItem("roomId", code);
-            simpanDataKeLocal();
+            const name = document.getElementById("playerName").value.trim();
+            const code = document.getElementById("joinCode").value.trim();
+            
+            if(!name) return alert("Isi nama dulu dong.");
+            if(!code) return alert("Masukkan Kode Room untuk bergabung.");
+            
+            localStorage.setItem("roomId", code.toUpperCase());
+            saveData(name);
             gabungRoom();
         };
 
-        function simpanDataKeLocal() {
-            const name = document.getElementById("playerName").value || "Player";
+        function saveData(name) {
             localStorage.setItem("playerName", name);
             localStorage.setItem("gameType", document.getElementById("vsBot").checked ? "vs_bot" : "multiplayer");
             localStorage.setItem("mode", document.getElementById("mode").value);
