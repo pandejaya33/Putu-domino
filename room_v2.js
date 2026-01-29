@@ -8,26 +8,25 @@ const myName = localStorage.getItem("playerName");
 const roomRef = doc(db, "rooms", roomId);
 
 function createDots(num) {
-    const pos = {
-        0: [], 1: ['center'], 2: ['top-right', 'bottom-left'],
-        3: ['top-right', 'center', 'bottom-left'],
-        4: ['top-left', 'top-right', 'bottom-left', 'bottom-right'],
-        5: ['top-left', 'top-right', 'center', 'bottom-left', 'bottom-right'],
-        6: ['top-left', 'top-right', 'mid-left', 'mid-right', 'bottom-left', 'bottom-right']
-    };
+    const pos = { 0: [], 1: ['center'], 2: ['top-right', 'bottom-left'], 3: ['top-right', 'center', 'bottom-left'], 4: ['top-left', 'top-right', 'bottom-left', 'bottom-right'], 5: ['top-left', 'top-right', 'center', 'bottom-left', 'bottom-right'], 6: ['top-left', 'top-right', 'mid-left', 'mid-right', 'bottom-left', 'bottom-right'] };
     return (pos[num] || []).map(p => `<div class="dot ${p}"></div>`).join('');
 }
 
 async function initRoom() {
     const snap = await getDoc(roomRef);
+    const mode = localStorage.getItem("mode") || "spirit";
+    const gameType = localStorage.getItem("gameType"); 
     const me = { id: myId, name: myName, ready: false, cards: [], isBot: false };
+
     if (!snap.exists()) {
-        const mode = localStorage.getItem("mode") || "spirit";
-        await setDoc(roomRef, { players: [me], started: false, deck: buatDeck(), hostId: myId, mode: mode });
-    } else {
-        if (!snap.data().players.find(p => p.id === myId)) {
-            await updateDoc(roomRef, { players: arrayUnion(me) });
+        let players = [me];
+        if (gameType === "vs_bot") {
+            players.push(
+                { id: "bot1", name: "Mas J", ready: true, cards: [], isBot: true },
+                { id: "bot2", name: "Mangku", ready: true, cards: [], isBot: true }
+            );
         }
+        await setDoc(roomRef, { players, started: false, deck: buatDeck(), hostId: myId, mode: mode });
     }
 }
 initRoom();
@@ -36,24 +35,25 @@ onSnapshot(roomRef, (snap) => {
     if (!snap.exists()) return;
     const room = snap.data();
     const me = room.players.find(p => p.id === myId);
+    const limit = room.mode === "spirit" ? 3 : 4;
 
-    // FIX: Pengaman agar tidak error null
-    const codeElem = document.getElementById("roomCode");
-    if (codeElem) codeElem.innerText = `${roomId} (${room.mode.toUpperCase()})`;
+    document.getElementById("roomCode").innerText = `${room.mode.toUpperCase()} (${roomId})`;
 
-    const listElem = document.getElementById("playerList");
-    if (listElem) {
-        listElem.innerHTML = room.players.map(p => `
-            <div class="player-card">
-                <span>${p.isBot ? '🤖' : '👤'} ${p.name}</span>
-                <span>${p.ready ? '✅' : '⏳'} (${p.cards.length} kartu)</span>
-            </div>
-        `).join("");
-    }
+    document.getElementById("playerList").innerHTML = room.players.map(p => `
+        <div class="player-card">
+            <span>${p.isBot ? '🤖' : '👤'} ${p.name}</span>
+            <span>${p.ready ? '✅' : '⏳'} ${p.cards.length} krt</span>
+        </div>
+    `).join("");
 
     const area = document.getElementById("kartuSaya");
     if (area && me?.cards) {
         area.innerHTML = me.cards.map(c => {
+            // Kartu Tertutup jika belum mencapai limit
+            if (me.cards.length < limit) {
+                return `<div class="domino-card-back"></div>`;
+            }
+            // Kartu Terbuka jika sudah lengkap
             const [t, b] = c.split("|");
             return `<div class="domino-card-real">
                 <div class="half">${createDots(parseInt(t))}</div>
@@ -63,7 +63,6 @@ onSnapshot(roomRef, (snap) => {
         }).join("");
     }
 
-    const limit = room.mode === "spirit" ? 3 : 4;
     const btnLanjut = document.getElementById("btnLanjut");
     if (btnLanjut) {
         btnLanjut.style.display = (room.started && me && me.cards.length > 0 && me.cards.length < limit) ? "block" : "none";
@@ -82,23 +81,15 @@ onSnapshot(roomRef, (snap) => {
 });
 
 window.setReady = async () => {
+    document.getElementById("sfxClick").play();
     const snap = await getDoc(roomRef);
     let p = [...snap.data().players];
     const i = p.findIndex(x => x.id === myId);
     if (i !== -1) { p[i].ready = true; await updateDoc(roomRef, { players: p }); }
 };
 
-window.tambahBot = async () => {
-    const names = ["Mas J", "Mangku", "Dontol"];
-    const snap = await getDoc(roomRef);
-    const count = snap.data().players.filter(p => p.isBot).length;
-    if (count < 3) {
-        const bot = { id: "bot_"+Date.now(), name: names[count], ready: true, cards: [], isBot: true };
-        await updateDoc(roomRef, { players: arrayUnion(bot) });
-    }
-};
-
 window.ambilKartuLanjut = async () => {
+    document.getElementById("sfxCard").play();
     const snap = await getDoc(roomRef);
     const room = snap.data();
     let p = [...room.players];
