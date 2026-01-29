@@ -3,32 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Room Domino Online</title>
+    <title>Domino Room Fix</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* Paksa tampilan berubah agar kita tahu ini versi baru */
+        body { background: #0f172a !important; color: white !important; }
+        .container { border: 2px solid #3b82f6 !important; padding: 15px; border-radius: 15px; }
+        .btn-bot { background: #6366f1 !important; margin-top: 10px; padding: 12px; width: 100%; border-radius: 10px; font-weight: bold; }
+        #btnLanjut { background: #2563eb !important; width: 100%; padding: 15px; margin-top: 20px; font-weight: bold; }
+    </style>
 </head>
 <body>
     <div class="container">
-        <h2 style="color: white; text-align: center;">🎴 ROOM DOMINO</h2>
-        <p style="color: #cbd5e1; text-align: center;">Kode Room: <span id="roomCode" style="font-weight: bold; color: white;">-</span></p>
+        <h2 style="text-align: center;">🎴 DOMINO ROOM</h2>
+        <p style="text-align: center; font-size: 12px;">ID: <span id="roomCode">-</span></p>
 
         <div class="playerBox">
-            <h3 style="color: white; margin-bottom: 10px;">Pemain di Room</h3>
             <div id="playerList"></div>
+            <button onclick="setReady()" style="background: #10b981; width: 100%; padding: 10px; border-radius: 10px; margin-top: 10px;">SIAP (READY)</button>
             
-            <button id="btnReady" onclick="setReady()" style="background: #10b981; color: white; margin-top: 10px;">SAYA SIAP (READY)</button>
-            <button id="btnBot" onclick="tambahBot()" style="background: #6366f1; color: white; margin-top: 10px;">🤖 TAMBAH PEMAIN BOT</button>
+            <button class="btn-bot" onclick="tambahBot()">🤖 VS MAS J & MANGKU</button>
         </div>
 
         <div class="gameBox">
-            <h3 style="color: white;">Kartu Saya</h3>
             <div id="kartuSaya" class="kartuArea"></div>
-            
-            <button id="btnLanjut" onclick="ambilKartuLanjut()" style="display:none; background: #3b82f6; color: white; margin-top: 20px;">+ AMBIL KARTU</button>
+            <button id="btnLanjut" onclick="ambilKartuLanjut()" style="display:none;">🃏 + AMBIL KARTU</button>
         </div>
 
-        <button onclick="mainLagi()" style="background: #f59e0b; color: white; margin-top: 20px; font-size: 14px;">🔄 RESET / MAIN LAGI</button>
+        <button onclick="mainLagi()" style="background: #ef4444; margin-top: 30px; font-size: 10px; opacity: 0.6;">RESET GAME</button>
     </div>
-
-    <script type="module" src="room.js?v=1"></script>
+    <script type="module" src="room.js?v=999"></script>
 </body>
 </html>
