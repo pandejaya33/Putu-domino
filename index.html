@@ -17,7 +17,7 @@
             </div>
             
             <div class="select-group">
-                <label>Mode Permainan:</label>
+                <label style="color: #ffd700; font-weight: bold;">Mode Permainan:</label>
                 <select id="mode">
                     <option value="spirit">Mode Spirit (3 Kartu)</option>
                     <option value="bererong">Mode Bererong (4 Kartu)</option>
@@ -25,9 +25,8 @@
             </div>
 
             <div class="bot-option">
-                <label class="switch-container">
-                    <input type="checkbox" id="vsBot">
-                    <span class="checkmark"></span>
+                <label style="color: white; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer;">
+                    <input type="checkbox" id="vsBot" style="width: 20px; height: 20px;">
                     Main vs Komputer (Bot)
                 </label>
             </div>
@@ -40,27 +39,27 @@
     </div>
 
     <script type="module">
+        // Import langsung dari file game.js
         import { buatRoom, gabungRoom } from "./game.js";
 
-        // Cara aman memanggil fungsi dari module
-        document.getElementById('btnBuat').addEventListener('click', () => {
-            simpanData();
+        // Mendaftarkan klik tombol secara manual agar tidak "Not Defined"
+        document.getElementById('btnBuat').onclick = () => {
+            simpanKeLocal();
             buatRoom();
-        });
+        };
 
-        document.getElementById('btnGabung').addEventListener('click', () => {
+        document.getElementById('btnGabung').onclick = () => {
             const code = document.getElementById("joinCode").value;
             if(!code) return alert("Masukkan Kode Room!");
-            simpanData();
+            simpanKeLocal();
             localStorage.setItem("roomId", code);
             gabungRoom();
-        });
+        };
 
-        function simpanData() {
+        function simpanKeLocal() {
             const name = document.getElementById("playerName").value || "Player_" + Math.floor(Math.random()*100);
-            const vsBot = document.getElementById("vsBot").checked;
             localStorage.setItem("playerName", name);
-            localStorage.setItem("gameType", vsBot ? "vs_bot" : "multiplayer");
+            localStorage.setItem("gameType", document.getElementById("vsBot").checked ? "vs_bot" : "multiplayer");
             localStorage.setItem("mode", document.getElementById("mode").value);
         }
     </script>
