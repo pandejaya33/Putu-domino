@@ -1,68 +1,52 @@
-/* BACKGROUND LOBBY - Tema Wanita & Kartu yang Aktif */
+/* BACKGROUND UTAMA - Tema Kasino & Kartu */
 .lobby-bg {
-    background: #000 url('https://w0.peakpx.com/wallpaper/701/1001/HD-wallpaper-poker-girl-cards-casino-girls-poker.jpg') no-repeat center center fixed;
+    background: #000 url('https://images.unsplash.com/photo-1511193311914-0346f16efe90?q=80&w=2073') no-repeat center center fixed;
     background-size: cover;
     margin: 0; padding: 0;
 }
 
 .overlay {
-    background: rgba(0, 0, 0, 0.7); /* Kegelapan ditingkatkan agar teks emas menonjol */
+    background: rgba(0, 0, 0, 0.75); /* Kegelapan ditingkatkan agar form menonjol */
     min-height: 100vh;
     display: flex; align-items: center; justify-content: center;
-    padding: 20px;
+    padding: 15px;
 }
 
 .login-box {
-    background: rgba(15, 15, 25, 0.9);
-    padding: 30px; border-radius: 20px;
-    width: 100%; max-width: 400px;
+    background: rgba(20, 20, 30, 0.95);
+    padding: 25px; border-radius: 20px;
+    width: 100%; max-width: 360px;
     border: 2px solid #ffd700;
-    box-shadow: 0 0 30px rgba(255, 215, 0, 0.2);
     text-align: center;
 }
 
-/* FONT INPUT - Dibuat Hitam agar terbaca jelas di kotak putih */
+/* INPUT AGAR SANGAT JELAS - Teks Hitam di Kotak Putih */
 input[type="text"], select {
     width: 100%;
-    padding: 15px;
+    padding: 14px;
     margin: 12px 0;
     border-radius: 10px;
-    border: none;
-    background: #ffffff;
-    color: #000000; /* Pasti terbaca */
+    border: 2px solid #ffd700;
+    background: #ffffff; /* Putih bersih */
+    color: #000000;    /* Teks hitam pekat agar mudah dibaca */
     font-size: 16px;
     font-weight: bold;
     box-sizing: border-box;
 }
 
-.title-mystic { 
-    color: #ffd700; 
-    font-size: 28px;
-    text-shadow: 2px 2px #000; 
-    margin-bottom: 25px; 
-}
+.title-mystic { color: #ffd700; font-size: 26px; text-shadow: 2px 2px #000; margin-bottom: 20px; }
 
-.button-container { display: flex; flex-direction: column; gap: 15px; margin-top: 20px; }
-
+/* TOMBOL KHUSUS HP */
 button {
-    padding: 18px; border-radius: 15px; border: none;
-    font-weight: bold; font-size: 18px; cursor: pointer; transition: 0.2s;
+    width: 100%; padding: 16px; border-radius: 12px; border: none;
+    font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 10px;
 }
 
-.btn-gold { background: linear-gradient(to bottom, #ffd700, #b8860b); color: #000; box-shadow: 0 4px 0 #8a6d00; }
-.btn-gold:active { transform: translateY(4px); box-shadow: none; }
-
+.btn-gold { background: linear-gradient(#ffd700, #b8860b); color: #000; }
 .btn-blue { background: #3b82f6; color: #fff; }
 
 /* TAMPILAN DALAM ROOM */
-.game-body { background: radial-gradient(circle, #0a4d28 0%, #052915 100%) !important; }
-
-.domino-card-real {
-    background: #ffeb3b; width: 65px; height: 110px;
-    border: 2px solid #000; border-radius: 8px; box-shadow: 4px 4px 10px rgba(0,0,0,0.5);
-}
-
-.domino-card-back {
-    background: #8b0000 url('https://www.transparenttextures.com/patterns/batik-fractal.png');
-    width: 65px; height: 110px; border: 2px solid #ffd700; border-radius: 8px;
+.game-body { 
+    background: radial-gradient(circle, #0a4d28 0%, #052915 100%) !important; 
+    color: white; 
 }
