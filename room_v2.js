@@ -7,11 +7,6 @@ const myId = localStorage.getItem("playerId");
 const myName = localStorage.getItem("playerName");
 const roomRef = doc(db, "rooms", roomId);
 
-function createDots(num) {
-    const pos = { 0: [], 1: ['center'], 2: ['top-right', 'bottom-left'], 3: ['top-right', 'center', 'bottom-left'], 4: ['top-left', 'top-right', 'bottom-left', 'bottom-right'], 5: ['top-left', 'top-right', 'center', 'bottom-left', 'bottom-right'], 6: ['top-left', 'top-right', 'mid-left', 'mid-right', 'bottom-left', 'bottom-right'] };
-    return (pos[num] || []).map(p => `<div class="dot ${p}"></div>`).join('');
-}
-
 async function initRoom() {
     const snap = await getDoc(roomRef);
     const mode = localStorage.getItem("mode") || "spirit";
@@ -27,6 +22,11 @@ async function initRoom() {
             );
         }
         await setDoc(roomRef, { players, started: false, deck: buatDeck(), hostId: myId, mode: mode });
+    } else {
+        const data = snap.data();
+        if (!data.players.find(p => p.id === myId)) {
+            await updateDoc(roomRef, { players: arrayUnion(me) });
+        }
     }
 }
 initRoom();
@@ -35,25 +35,21 @@ onSnapshot(roomRef, (snap) => {
     if (!snap.exists()) return;
     const room = snap.data();
     const me = room.players.find(p => p.id === myId);
-    const limit = room.mode === "spirit" ? 3 : 4;
-
-    document.getElementById("roomCode").innerText = `${room.mode.toUpperCase()} (${roomId})`;
-
+    
+    // Update daftar pemain (Agar nama lawan muncul)
     document.getElementById("playerList").innerHTML = room.players.map(p => `
-        <div class="player-card">
+        <div style="background:rgba(255,255,255,0.1); padding:10px; margin:5px; border-radius:8px; display:flex; justify-content:space-between;">
             <span>${p.isBot ? '🤖' : '👤'} ${p.name}</span>
-            <span>${p.ready ? '✅' : '⏳'} ${p.cards.length} krt</span>
+            <span>${p.cards.length} kartu ${p.ready ? '✅' : '⏳'}</span>
         </div>
     `).join("");
 
+    // Logika render kartu (tetap sama seperti sebelumnya)
     const area = document.getElementById("kartuSaya");
+    const limit = room.mode === "spirit" ? 3 : 4;
     if (area && me?.cards) {
         area.innerHTML = me.cards.map(c => {
-            // Kartu Tertutup jika belum mencapai limit
-            if (me.cards.length < limit) {
-                return `<div class="domino-card-back"></div>`;
-            }
-            // Kartu Terbuka jika sudah lengkap
+            if (me.cards.length < limit) return `<div class="domino-card-back"></div>`;
             const [t, b] = c.split("|");
             return `<div class="domino-card-real">
                 <div class="half">${createDots(parseInt(t))}</div>
@@ -62,11 +58,12 @@ onSnapshot(roomRef, (snap) => {
             </div>`;
         }).join("");
     }
-
+    
+    // Tampilkan tombol ambil kartu jika giliran
     const btnLanjut = document.getElementById("btnLanjut");
-    if (btnLanjut) {
-        btnLanjut.style.display = (room.started && me && me.cards.length > 0 && me.cards.length < limit) ? "block" : "none";
-    }
+    if (btnLanjut) btnLanjut.style.display = (room.started && me.cards.length < limit) ? "block" : "none";
+});
+
 
     if (!room.started && room.players.length >= 2 && room.players.every(p => p.ready)) {
         if (room.hostId === myId) {
