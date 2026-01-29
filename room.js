@@ -7,17 +7,23 @@ const myId = localStorage.getItem("playerId");
 const myName = localStorage.getItem("playerName");
 const roomRef = doc(db, "rooms", roomId);
 
-let sudahBagiAwal = false;
+let sedangBagi = false;
 
 async function initRoom() {
     const snap = await getDoc(roomRef);
-    const me = { id: myId, name: myName, ready: false, cards: [], revealed: [], isBot: false };
     if (!snap.exists()) {
-        await setDoc(roomRef, { players: [me], started: false, deck: buatDeck(), hostId: myId });
+        await setDoc(roomRef, { 
+            players: [{ id: myId, name: myName, ready: false, cards: [], isBot: false }], 
+            started: false, 
+            deck: buatDeck(), 
+            hostId: myId 
+        });
     } else {
         const room = snap.data();
         if (!room.players.find(p => p.id === myId)) {
-            await updateDoc(roomRef, { players: arrayUnion(me) });
+            await updateDoc(roomRef, { 
+                players: arrayUnion({ id: myId, name: myName, ready: false, cards: [], isBot: false }) 
+            });
         }
     }
 }
@@ -30,28 +36,27 @@ onSnapshot(roomRef, (snap) => {
 
     document.getElementById("roomCode").innerText = roomId;
     
-    // Tampilan daftar pemain
-    const list = document.getElementById("playerList");
-    list.innerHTML = room.players.map(p => `
-        <div class="player-item" style="display:flex; justify-content:space-between; background:rgba(255,255,255,0.1); padding:10px; margin-bottom:5px; border-radius:8px;">
+    // List Pemain
+    document.getElementById("playerList").innerHTML = room.players.map(p => `
+        <div style="background:rgba(255,255,255,0.1); padding:8px; margin-bottom:5px; border-radius:5px; display:flex; justify-content:space-between;">
             <span>${p.isBot ? '🤖' : '👤'} ${p.name}</span>
-            <span style="color: ${p.ready ? '#10b981' : '#f59e0b'}">${p.ready ? '✅ Ready' : '⏳ Menunggu'} (${p.cards.length} kartu)</span>
+            <span>${p.ready ? '✅' : '⏳'} (${p.cards.length} kartu)</span>
         </div>
     `).join("");
 
-    // Tampilan kartu
+    // Render Kartu (Putih polos agar kontras)
     const area = document.getElementById("kartuSaya");
     area.innerHTML = "";
-    if (me && me.cards) {
-        me.cards.forEach((c, i) => {
+    if (me?.cards) {
+        me.cards.forEach(() => {
             const div = document.createElement("div");
             div.className = "dominoCard";
-            div.innerHTML = `<div class="back" style="background:#222; width:60px; height:100px; border-radius:5px; border:2px solid #444;"></div>`;
+            div.style.background = "#fff";
             area.appendChild(div);
         });
     }
 
-    // LOGIKA LIMIT: Hanya izinkan ambil kartu jika < 3
+    // --- REM (LIMIT) SPIRIT 3 KARTU ---
     const btnLanjut = document.getElementById("btnLanjut");
     if (room.started && me && me.cards.length > 0 && me.cards.length < 3) {
         btnLanjut.style.display = "block";
@@ -59,23 +64,19 @@ onSnapshot(roomRef, (snap) => {
         btnLanjut.style.display = "none";
     }
 
-    // MULAI GAME: Hanya Host yang membagi 1 kartu pertama
+    // MULAI (PASTI 1 KARTU)
     if (!room.started && room.players.length >= 2 && room.players.every(p => p.ready)) {
-        if (room.hostId === myId && !sudahBagiAwal) {
-            sudahBagiAwal = true;
-            bagiKartuSatu(room);
+        if (room.hostId === myId && !sedangBagi) {
+            sedangBagi = true;
+            let deck = [...room.deck];
+            const pUpdate = room.players.map(p => {
+                const k = deck.pop();
+                return { ...p, cards: [`${k.left}|${k.right}`] }; // HANYA 1
+            });
+            updateDoc(roomRef, { started: true, players: pUpdate, deck: deck });
         }
     }
 });
-
-async function bagiKartuSatu(room) {
-    let deck = [...room.deck];
-    const pBaru = room.players.map(p => {
-        const k = deck.pop();
-        return { ...p, cards: [`${k.left}|${k.right}`] }; // HANYA 1 KARTU
-    });
-    await updateDoc(roomRef, { started: true, players: pBaru, deck: deck });
-}
 
 window.tambahBot = async () => {
     const snap = await getDoc(roomRef);
@@ -89,23 +90,23 @@ window.tambahBot = async () => {
 
 window.setReady = async () => {
     const snap = await getDoc(roomRef);
-    const players = [...snap.data().players];
-    const idx = players.findIndex(p => p.id === myId);
-    players[idx].ready = true;
-    await updateDoc(roomRef, { players });
+    const p = [...snap.data().players];
+    const i = p.findIndex(x => x.id === myId);
+    p[i].ready = true;
+    await updateDoc(roomRef, { players: p });
 };
 
 window.ambilKartuLanjut = async () => {
     const snap = await getDoc(roomRef);
     const room = snap.data();
-    let players = [...room.players];
-    const idx = players.findIndex(p => p.id === myId);
-
-    if (players[idx].cards.length < 3) { // LIMIT KETAT 3 KARTU
-        let deck = [...room.deck];
-        const k = deck.pop();
-        players[idx].cards.push(`${k.left}|${k.right}`);
-        await updateDoc(roomRef, { players, deck });
+    let p = [...room.players];
+    const i = p.findIndex(x => x.id === myId);
+    
+    if (p[i].cards.length < 3) { // LIMIT TOTAL 3 KARTU
+        let d = [...room.deck];
+        const k = d.pop();
+        p[i].cards.push(`${k.left}|${k.right}`);
+        await updateDoc(roomRef, { players: p, deck: d });
     }
 };
 
