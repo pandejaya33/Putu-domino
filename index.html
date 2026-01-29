@@ -1,28 +1,48 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-<meta charset="UTF-8" />
-<title>Domino Online</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta charset="UTF-8">
+    <title>Domino Mystic - Lobby</title>
+    <link rel="stylesheet" href="style_v2.css">
 </head>
+<body class="lobby-bg">
+    <div class="overlay">
+        <div class="login-box">
+            <h1>🎴 DOMINO MYSTIC</h1>
+            <input type="text" id="playerName" placeholder="Nama kamu">
+            <input type="text" id="joinCode" placeholder="Kode Room (jika gabung)">
+            
+            <select id="mode">
+                <option value="spirit">Mode Spirit</option>
+                <option value="bererong">Mode Bererong</option>
+            </select>
 
-<body style="font-family:sans-serif;text-align:center;background:#0f172a;color:white;padding-top:40px;">
+            <div class="bot-option">
+                <input type="checkbox" id="vsBot"> <label for="vsBot" style="color:white">Main vs Komputer</label>
+            </div>
 
-<h2>DOMINO ONLINE</h2>
+            <div class="button-group">
+                <button class="btn-main" onclick="prosesMain('buat')">Buat Room</button>
+                <button class="btn-sub" onclick="prosesMain('gabung')">Gabung Room</button>
+            </div>
+        </div>
+    </div>
 
-<input id="nameInput" placeholder="Nama kamu" style="padding:10px;width:200px;"><br><br>
-<input id="roomInput" placeholder="Kode Room (jika gabung)" style="padding:10px;width:200px;"><br><br>
-
-<select id="modeSelect" style="padding:10px;width:220px;">
-  <option value="spirit">Mode Spirit</option>
-  <option value="brerong">Mode Brerong</option>
-</select>
-
-<br><br>
-
-<button onclick="buatRoom()">Buat Room</button>
-<button onclick="gabungRoom()">Gabung Room</button>
-
-<script type="module" src="index.js"></script>
+    <script type="module">
+        import { buatRoom, gabungRoom } from "./game.js";
+        window.prosesMain = (tipe) => {
+            const name = document.getElementById("playerName").value;
+            const vsBot = document.getElementById("vsBot").checked;
+            localStorage.setItem("playerName", name || "Player");
+            localStorage.setItem("gameType", vsBot ? "vs_bot" : "multiplayer");
+            localStorage.setItem("mode", document.getElementById("mode").value);
+            
+            if(tipe === 'buat') buatRoom();
+            else {
+                localStorage.setItem("roomId", document.getElementById("joinCode").value);
+                gabungRoom();
+            }
+        };
+    </script>
 </body>
 </html>
