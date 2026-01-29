@@ -1,40 +1,64 @@
-/* BACKGROUND LOBBY */
+/* BACKGROUND THEME */
 .lobby-bg {
     background: url('https://images.unsplash.com/photo-1511193311914-0346f16efe90?q=80&w=2073') no-repeat center center fixed;
     background-size: cover;
+    margin: 0; padding: 0;
+    font-family: 'Segoe UI', Arial, sans-serif;
 }
 
-/* BACKGROUND DI DALAM ROOM (MEJA KARTU) */
-.game-body { 
-    background: radial-gradient(circle, #0a4d28 0%, #052915 100%) !important; /* Hijau Meja Kasino */
-    color: white; font-family: sans-serif; margin: 0; padding: 20px;
-    display: flex; justify-content: center; min-height: 100vh;
+/* KHUSUS LOBBY: TEMA WANITA & KARTU */
+.overlay {
+    background: rgba(0, 0, 0, 0.6) url('https://w0.peakpx.com/wallpaper/143/182/HD-wallpaper-poker-girl-cards-girl-poker.jpg') no-repeat center bottom;
+    background-size: contain;
+    background-blend-mode: darken;
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px; box-sizing: border-box;
 }
-
-.overlay { background: rgba(0,0,0,0.6); min-height: 100vh; display: flex; align-items: center; justify-content: center; width: 100%; }
 
 .login-box {
-    background: #1a1a2e; padding: 30px; border-radius: 15px;
-    border: 2px solid #ffd700; width: 300px; text-align: center;
+    background: rgba(20, 20, 35, 0.95);
+    padding: 25px; border-radius: 20px;
+    width: 100%; max-width: 380px; /* Ukuran pas untuk HP */
+    border: 2px solid #ffd700;
+    box-shadow: 0 0 20px rgba(0,0,0,0.8);
+    text-align: center;
 }
 
-.container { 
-    background: rgba(0, 0, 0, 0.8); padding: 20px; border-radius: 15px; 
-    width: 100%; max-width: 400px; border: 1px solid #ffd700;
+/* UKURAN INPUT UNTUK HP */
+input[type="text"], select {
+    width: 100%;
+    padding: 15px; /* Lebih besar agar mudah ditekan di HP */
+    margin: 10px 0;
+    border-radius: 10px;
+    border: 1px solid #444;
+    background: #fff;
+    font-size: 16px; /* Mencegah auto-zoom di iPhone */
+    box-sizing: border-box;
 }
 
-/* KARTU DOMINO (Kuning sesuai fotomu) */
+.title-mystic { color: #ffd700; text-shadow: 2px 2px #000; margin-bottom: 20px; }
+
+.button-container { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
+
+button {
+    padding: 16px; border-radius: 12px; border: none;
+    font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.3s;
+}
+
+.btn-gold { background: linear-gradient(#ffd700, #b8860b); color: #000; }
+.btn-blue { background: #3b82f6; color: #fff; }
+
+/* TAMPILAN DALAM ROOM */
+.game-body { background: #0a4d28 !important; padding: 10px; }
+.kartuArea { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 20px 0; }
+
+/* KARTU KUNING TITIK MERAH */
 .domino-card-real {
-    background: #ffeb3b !important; width: 60px; height: 100px;
-    border: 2px solid #000; border-radius: 5px; box-shadow: 3px 3px 10px rgba(0,0,0,0.5);
+    background: #ffeb3b; width: 65px; height: 110px;
+    border: 2px solid #000; border-radius: 6px; position: relative;
 }
-
 .domino-card-back {
     background: #8b0000 url('https://www.transparenttextures.com/patterns/batik-fractal.png');
-    width: 60px; height: 100px; border: 2px solid #fff; border-radius: 5px;
+    width: 65px; height: 110px; border: 2px solid #fff; border-radius: 6px;
 }
-
-/* Tombol */
-button { width: 100%; padding: 12px; margin: 5px 0; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; }
-.btn-main { background: #ffd700; color: #000; }
-.btn-sub { background: #3b82f6; color: #fff; }
