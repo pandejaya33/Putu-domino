@@ -41,7 +41,12 @@ onSnapshot(roomRef, (snap) => {
     const room = snap.data();
     const me = room.players.find(p => p.id === myId);
 
-    document.getElementById("roomCode").innerText = `${roomId} - ${room.mode.toUpperCase()}`;
+    // Ganti baris 44 yang error itu dengan ini agar tidak crash lagi:
+const roomCodeElem = document.getElementById("roomCode");
+if (roomCodeElem) {
+    roomCodeElem.innerText = roomId + " - " + room.mode.toUpperCase();
+}
+
 
     // List Pemain (Perbaikan Bot agar tidak gabung)
     document.getElementById("playerList").innerHTML = room.players.map(p => `
