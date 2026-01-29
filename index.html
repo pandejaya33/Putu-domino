@@ -7,55 +7,35 @@
     <link rel="stylesheet" href="style_v2.css">
 </head>
 <body class="lobby-bg">
-    <div class="overlay">
-        <div class="login-box">
-            <h1 class="title-mystic">🎴 DOMINO MYSTIC</h1>
-            
-            <input type="text" id="playerName" placeholder="Input Nama Kamu (Wajib)">
-            <input type="text" id="joinCode" placeholder="Kode Room (untuk gabung)">
-            
-            <select id="mode">
-                <option value="spirit">Mode Spirit (3 Kartu)</option>
-                <option value="bererong">Mode Bererong (4 Kartu)</option>
-            </select>
-
-            <label style="color: white; display: flex; align-items: center; justify-content: center; gap: 8px; margin: 15px 0;">
-                <input type="checkbox" id="vsBot" style="width: 20px; height: 20px;"> Main vs Mas J
-            </label>
-
-            <button id="btnBuat" class="btn-gold">BUAT ROOM</button>
-            <button id="btnGabung" class="btn-blue">GABUNG ROOM</button>
-        </div>
+    <div class="login-box">
+        <h1 style="color:#ffd700">🎴 DOMINO MYSTIC</h1>
+        <input type="text" id="playerName" placeholder="Nama Kamu (Wajib)">
+        <input type="text" id="joinCode" placeholder="Kode Room (untuk gabung)">
+        <select id="mode">
+            <option value="spirit">Mode Spirit (3 Kartu)</option>
+            <option value="bererong">Mode Bererong (4 Kartu)</option>
+        </select>
+        <button id="btnBuat" class="btn-gold">BUAT ROOM</button>
+        <button id="btnGabung" class="btn-blue">GABUNG ROOM</button>
     </div>
 
     <script type="module">
         import { buatRoom, gabungRoom } from "./game.js";
-
+        const nInput = document.getElementById('playerName');
+        
         document.getElementById('btnBuat').onclick = () => {
-            const name = document.getElementById("playerName").value.trim();
-            if(!name) return alert("Eits! Nama tidak boleh kosong ya.");
-            
-            saveData(name);
+            if(!nInput.value.trim()) return alert("Isi nama dulu!");
+            localStorage.setItem("playerName", nInput.value);
             buatRoom();
         };
 
         document.getElementById('btnGabung').onclick = () => {
-            const name = document.getElementById("playerName").value.trim();
-            const code = document.getElementById("joinCode").value.trim();
-            
-            if(!name) return alert("Isi nama dulu dong.");
-            if(!code) return alert("Masukkan Kode Room untuk bergabung.");
-            
+            const code = document.getElementById("joinCode").value;
+            if(!nInput.value.trim() || !code) return alert("Nama & Kode Room wajib!");
+            localStorage.setItem("playerName", nInput.value);
             localStorage.setItem("roomId", code.toUpperCase());
-            saveData(name);
             gabungRoom();
         };
-
-        function saveData(name) {
-            localStorage.setItem("playerName", name);
-            localStorage.setItem("gameType", document.getElementById("vsBot").checked ? "vs_bot" : "multiplayer");
-            localStorage.setItem("mode", document.getElementById("mode").value);
-        }
     </script>
 </body>
 </html>
