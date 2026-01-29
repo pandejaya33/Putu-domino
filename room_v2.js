@@ -1,103 +1,122 @@
 import { db } from "./firebase.js";
-import { doc, onSnapshot, updateDoc, getDoc, setDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { doc, onSnapshot, updateDoc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { buatDeck } from "./game.js";
 
 const roomId = localStorage.getItem("roomId");
 const myId = localStorage.getItem("playerId");
 const myName = localStorage.getItem("playerName");
+const isVsBot = localStorage.getItem("gameType") === "vs_bot";
+
+// 1. Validasi Keamanan: Jika nama kosong, tendang balik ke lobby
+if (!roomId || !myName) {
+    alert("Data tidak lengkap! Silakan isi nama di lobby.");
+    window.location.href = "index.html";
+}
+
 const roomRef = doc(db, "rooms", roomId);
 
+// 2. Fungsi Gabung/Inisialisasi Room
 async function initRoom() {
     const snap = await getDoc(roomRef);
-    const mode = localStorage.getItem("mode") || "spirit";
-    const gameType = localStorage.getItem("gameType"); 
-    const me = { id: myId, name: myName, ready: false, cards: [], isBot: false };
-
+    let players = [];
+    
     if (!snap.exists()) {
-        let players = [me];
-        if (gameType === "vs_bot") {
-            players.push(
-                { id: "bot1", name: "Mas J", ready: true, cards: [], isBot: true },
-                { id: "bot2", name: "Mangku", ready: true, cards: [], isBot: true }
-            );
+        // Jika room baru, buat data awal
+        players = [{ id: myId, name: myName, ready: false, cards: [] }];
+        if (isVsBot) {
+            players.push({ id: "bot_j", name: "Mas J", ready: true, cards: [] });
         }
-        await setDoc(roomRef, { players, started: false, deck: buatDeck(), hostId: myId, mode: mode });
+        await setDoc(roomRef, {
+            players,
+            started: false,
+            mode: localStorage.getItem("mode") || "spirit",
+            createdAt: Date.now()
+        });
     } else {
-        const data = snap.data();
-        if (!data.players.find(p => p.id === myId)) {
-            await updateDoc(roomRef, { players: arrayUnion(me) });
+        // Jika room sudah ada, tambah player baru
+        players = snap.data().players || [];
+        if (!players.find(p => p.id === myId)) {
+            players.push({ id: myId, name: myName, ready: false, cards: [] });
+            await updateDoc(roomRef, { players });
         }
     }
 }
-initRoom();
 
-onSnapshot(roomRef, (snap) => {
+// 3. Fungsi Tombol SIAP (Ready)
+window.setReady = async () => {
+    const snap = await getDoc(roomRef);
     if (!snap.exists()) return;
-    const room = snap.data();
-    const me = room.players.find(p => p.id === myId);
     
-    // Update daftar pemain (Agar nama lawan muncul)
-    document.getElementById("playerList").innerHTML = room.players.map(p => `
-        <div style="background:rgba(255,255,255,0.1); padding:10px; margin:5px; border-radius:8px; display:flex; justify-content:space-between;">
-            <span>${p.isBot ? '🤖' : '👤'} ${p.name}</span>
-            <span>${p.cards.length} kartu ${p.ready ? '✅' : '⏳'}</span>
-        </div>
-    `).join("");
-
-    // Logika render kartu (tetap sama seperti sebelumnya)
-    const area = document.getElementById("kartuSaya");
-    const limit = room.mode === "spirit" ? 3 : 4;
-    if (area && me?.cards) {
-        area.innerHTML = me.cards.map(c => {
-            if (me.cards.length < limit) return `<div class="domino-card-back"></div>`;
-            const [t, b] = c.split("|");
-            return `<div class="domino-card-real">
-                <div class="half">${createDots(parseInt(t))}</div>
-                <div class="line"></div>
-                <div class="half">${createDots(parseInt(b))}</div>
-            </div>`;
-        }).join("");
-    }
+    let players = [...snap.data().players];
+    const idx = players.findIndex(p => p.id === myId);
     
-    // Tampilkan tombol ambil kartu jika giliran
-    const btnLanjut = document.getElementById("btnLanjut");
-    if (btnLanjut) btnLanjut.style.display = (room.started && me.cards.length < limit) ? "block" : "none";
-});
-
-
-    if (!room.started && room.players.length >= 2 && room.players.every(p => p.ready)) {
-        if (room.hostId === myId) {
-            let deck = [...room.deck];
-            const pUpdate = room.players.map(p => {
-                const k = deck.pop();
-                return { ...p, cards: [`${k.left}|${k.right}`] };
-            });
-            updateDoc(roomRef, { started: true, players: pUpdate, deck: deck });
+    if (idx !== -1) {
+        players[idx].ready = true;
+        await updateDoc(roomRef, { players });
+        
+        // Cek jika semua sudah ready, mulai bagi kartu
+        const allReady = players.every(p => p.ready === true);
+        if (allReady && players.length >= (isVsBot ? 2 : 2)) {
+            mulaiPermainan(players);
         }
     }
+};
+
+// 4. Fungsi Bagi Kartu
+async function mulaiPermainan(players) {
+    const deck = buatDeck();
+    const mode = localStorage.getItem("mode");
+    const jumlahKartu = mode === "bererong" ? 4 : 3;
+
+    const updatedPlayers = players.map(p => {
+        return { ...p, cards: deck.splice(0, jumlahKartu) };
+    });
+
+    await updateDoc(roomRef, {
+        players: updatedPlayers,
+        started: true
+    });
+}
+
+// 5. Update UI Real-time
+onSnapshot(roomRef, (snap) => {
+    if (!snap.exists()) return;
+    const data = snap.data();
+    
+    // Update Info Room
+    const codeEl = document.getElementById("roomCode");
+    if (codeEl) codeEl.innerText = `KODE: ${roomId} (${data.mode.toUpperCase()})`;
+
+    // Render Daftar Player
+    const container = document.getElementById("playerList");
+    if (container) {
+        container.innerHTML = data.players.map(p => `
+            <div class="player-card ${p.ready ? 'ready' : ''}">
+                <span>${p.id === myId ? '⭐ ' : ''}${p.name}</span>
+                <span>${p.ready ? '✅ SIAP' : '⏳ MENUNGGU'}</span>
+                <div class="card-count">${p.cards.length} Kartu</div>
+            </div>
+        `).join('');
+    }
+
+    // Tampilkan Kartu Milik Sendiri jika sudah mulai
+    if (data.started) {
+        const me = data.players.find(p => p.id === myId);
+        renderMyCards(me.cards);
+    }
 });
 
-window.setReady = async () => {
-    document.getElementById("sfxClick").play();
-    const snap = await getDoc(roomRef);
-    let p = [...snap.data().players];
-    const i = p.findIndex(x => x.id === myId);
-    if (i !== -1) { p[i].ready = true; await updateDoc(roomRef, { players: p }); }
-};
+function renderMyCards(cards) {
+    const area = document.getElementById("myCardsArea");
+    if (!area) return;
+    area.innerHTML = cards.map(c => `
+        <div class="domino-card-real">
+            <div class="top">${c.left}</div>
+            <div class="line"></div>
+            <div class="bottom">${c.right}</div>
+        </div>
+    `).join('');
+}
 
-window.ambilKartuLanjut = async () => {
-    document.getElementById("sfxCard").play();
-    const snap = await getDoc(roomRef);
-    const room = snap.data();
-    let p = [...room.players];
-    const i = p.findIndex(x => x.id === myId);
-    let deck = [...room.deck];
-    const k = deck.pop();
-    p[i].cards.push(`${k.left}|${k.right}`);
-    await updateDoc(roomRef, { players: p, deck: deck });
-};
-
-window.mainLagi = async () => {
-    await updateDoc(roomRef, { started: false, players: [] });
-    window.location.reload();
-};
+// Jalankan inisialisasi
+initRoom();
