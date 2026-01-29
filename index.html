@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Domino Mystic - Lobby</title>
+    <title>Domino Mystic</title>
     <link rel="stylesheet" href="style_v2.css">
 </head>
 <body class="lobby-bg">
@@ -11,57 +11,41 @@
         <div class="login-box">
             <h1 class="title-mystic">🎴 DOMINO MYSTIC</h1>
             
-            <div class="input-group">
-                <input type="text" id="playerName" placeholder="Nama Kamu">
-                <input type="text" id="joinCode" placeholder="Kode Room (untuk gabung)">
-            </div>
+            <input type="text" id="playerName" placeholder="Nama Kamu">
+            <input type="text" id="joinCode" placeholder="Kode Room (jika gabung)">
             
-            <div class="select-group">
-                <label style="color: #ffd700; font-weight: bold;">Mode Permainan:</label>
-                <select id="mode">
-                    <option value="spirit">Mode Spirit (3 Kartu)</option>
-                    <option value="bererong">Mode Bererong (4 Kartu)</option>
-                </select>
-            </div>
+            <select id="mode">
+                <option value="spirit">Mode Spirit (3 Kartu)</option>
+                <option value="bererong">Mode Bererong (4 Kartu)</option>
+            </select>
 
-            <div class="bot-option">
-                <label style="color: white; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer;">
-                    <input type="checkbox" id="vsBot" style="width: 20px; height: 20px;">
-                    Main vs Komputer (Bot)
-                </label>
-            </div>
+            <label style="color: white; display: flex; align-items: center; justify-content: center; gap: 8px; margin: 10px 0;">
+                <input type="checkbox" id="vsBot" style="width: 18px; height: 18px;"> vs Komputer
+            </label>
 
-            <div class="button-container">
-                <button id="btnBuat" class="btn-gold">BUAT ROOM</button>
-                <button id="btnGabung" class="btn-blue">GABUNG ROOM</button>
-            </div>
+            <button id="btnBuat" class="btn-gold">BUAT ROOM</button>
+            <button id="btnGabung" class="btn-blue">GABUNG ROOM</button>
         </div>
     </div>
 
     <script type="module">
-        // Import langsung dari file game.js
         import { buatRoom, gabungRoom } from "./game.js";
 
-        // Mendaftarkan klik tombol secara manual agar tidak "Not Defined"
         document.getElementById('btnBuat').onclick = () => {
-            simpanKeLocal();
+            const name = document.getElementById("playerName").value || "Player";
+            localStorage.setItem("playerName", name);
+            localStorage.setItem("gameType", document.getElementById("vsBot").checked ? "vs_bot" : "multiplayer");
+            localStorage.setItem("mode", document.getElementById("mode").value);
             buatRoom();
         };
 
         document.getElementById('btnGabung').onclick = () => {
             const code = document.getElementById("joinCode").value;
             if(!code) return alert("Masukkan Kode Room!");
-            simpanKeLocal();
             localStorage.setItem("roomId", code);
+            localStorage.setItem("playerName", document.getElementById("playerName").value || "Player");
             gabungRoom();
         };
-
-        function simpanKeLocal() {
-            const name = document.getElementById("playerName").value || "Player_" + Math.floor(Math.random()*100);
-            localStorage.setItem("playerName", name);
-            localStorage.setItem("gameType", document.getElementById("vsBot").checked ? "vs_bot" : "multiplayer");
-            localStorage.setItem("mode", document.getElementById("mode").value);
-        }
     </script>
 </body>
 </html>
