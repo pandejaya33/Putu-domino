@@ -2,47 +2,67 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Domino Mystic - Lobby</title>
     <link rel="stylesheet" href="style_v2.css">
 </head>
 <body class="lobby-bg">
     <div class="overlay">
         <div class="login-box">
-            <h1>🎴 DOMINO MYSTIC</h1>
-            <input type="text" id="playerName" placeholder="Nama kamu">
-            <input type="text" id="joinCode" placeholder="Kode Room (jika gabung)">
+            <h1 class="title-mystic">🎴 DOMINO MYSTIC</h1>
             
-            <select id="mode">
-                <option value="spirit">Mode Spirit</option>
-                <option value="bererong">Mode Bererong</option>
-            </select>
-
-            <div class="bot-option">
-                <input type="checkbox" id="vsBot"> <label for="vsBot" style="color:white">Main vs Komputer</label>
+            <div class="input-group">
+                <input type="text" id="playerName" placeholder="Nama Kamu">
+                <input type="text" id="joinCode" placeholder="Kode Room (untuk gabung)">
+            </div>
+            
+            <div class="select-group">
+                <label>Mode Permainan:</label>
+                <select id="mode">
+                    <option value="spirit">Mode Spirit (3 Kartu)</option>
+                    <option value="bererong">Mode Bererong (4 Kartu)</option>
+                </select>
             </div>
 
-            <div class="button-group">
-                <button class="btn-main" onclick="prosesMain('buat')">Buat Room</button>
-                <button class="btn-sub" onclick="prosesMain('gabung')">Gabung Room</button>
+            <div class="bot-option">
+                <label class="switch-container">
+                    <input type="checkbox" id="vsBot">
+                    <span class="checkmark"></span>
+                    Main vs Komputer (Bot)
+                </label>
+            </div>
+
+            <div class="button-container">
+                <button id="btnBuat" class="btn-gold">BUAT ROOM</button>
+                <button id="btnGabung" class="btn-blue">GABUNG ROOM</button>
             </div>
         </div>
     </div>
 
     <script type="module">
         import { buatRoom, gabungRoom } from "./game.js";
-        window.prosesMain = (tipe) => {
-            const name = document.getElementById("playerName").value;
+
+        // Cara aman memanggil fungsi dari module
+        document.getElementById('btnBuat').addEventListener('click', () => {
+            simpanData();
+            buatRoom();
+        });
+
+        document.getElementById('btnGabung').addEventListener('click', () => {
+            const code = document.getElementById("joinCode").value;
+            if(!code) return alert("Masukkan Kode Room!");
+            simpanData();
+            localStorage.setItem("roomId", code);
+            gabungRoom();
+        });
+
+        function simpanData() {
+            const name = document.getElementById("playerName").value || "Player_" + Math.floor(Math.random()*100);
             const vsBot = document.getElementById("vsBot").checked;
-            localStorage.setItem("playerName", name || "Player");
+            localStorage.setItem("playerName", name);
             localStorage.setItem("gameType", vsBot ? "vs_bot" : "multiplayer");
             localStorage.setItem("mode", document.getElementById("mode").value);
-            
-            if(tipe === 'buat') buatRoom();
-            else {
-                localStorage.setItem("roomId", document.getElementById("joinCode").value);
-                gabungRoom();
-            }
-        };
+        }
     </script>
 </body>
 </html>
