@@ -1,3 +1,4 @@
+// Fungsi mengocok kartu Domino
 export function buatDeck() {
     let deck = [];
     for (let i = 0; i <= 6; i++) {
@@ -8,18 +9,20 @@ export function buatDeck() {
     return deck.sort(() => Math.random() - 0.5);
 }
 
+// Fungsi membuat Room Baru
 export function buatRoom() {
-    // Membuat ID unik untuk room
-    const id = Math.random().toString(36).substring(2, 7);
+    const id = Math.random().toString(36).substring(2, 7); // Kode unik 5 karakter
+    const pId = "p_" + Math.random().toString(36).substring(2, 6);
     localStorage.setItem("roomId", id);
-    // Membuat ID unik untuk player
-    localStorage.setItem("playerId", "p_" + Math.random().toString(36).substring(2, 6));
+    localStorage.setItem("playerId", pId);
     window.location.href = "room.html"; 
 }
 
+// Fungsi bergabung ke Room yang sudah ada
 export function gabungRoom() {
-    const code = localStorage.getItem("roomId");
-    if (!code) return alert("Kode Room tidak ditemukan!");
-    localStorage.setItem("playerId", "p_" + Math.random().toString(36).substring(2, 6));
+    const id = localStorage.getItem("roomId");
+    if (!id) return alert("Masukkan kode room terlebih dahulu!");
+    const pId = "p_" + Math.random().toString(36).substring(2, 6);
+    localStorage.setItem("playerId", pId);
     window.location.href = "room.html";
 }
