@@ -1,4 +1,31 @@
-<h2 id="roomTitle">DOMINO ROOM V2</h2>
-<p>KODE: <span id="roomCode">Menghubungkan...</span></p> <div id="playerList"></div> <div id="kartuSaya" class="kartuArea"></div> <button id="btnReady" onclick="setReady()">SIAP (READY)</button>
-<button id="btnBot" onclick="tambahBot()">🤖 VS MAS J & MANGKU</button>
-<button id="btnLanjut" onclick="ambilKartuLanjut()" style="display:none;">+ AMBIL KARTU</button>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Domino Room V2</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h2 id="roomTitle">🎴 DOMINO ROOM V2</h2>
+        <p>KODE: <span id="roomCode">Menghubungkan...</span></p>
+
+        <div class="lobby-section">
+            <div id="playerList"></div>
+            
+            <button id="btnReady" onclick="setReady()">SIAP (READY)</button>
+            <button id="btnBot" onclick="tambahBot()">🤖 VS MAS J & MANGKU</button>
+        </div>
+
+        <div class="game-section">
+            <div id="kartuSaya" class="kartuArea"></div>
+            <button id="btnLanjut" onclick="ambilKartuLanjut()" style="display:none;">+ AMBIL KARTU</button>
+        </div>
+
+        <button id="btnReset" onclick="mainLagi()">RESET GAME</button>
+    </div>
+
+    <script type="module" src="room_v2.js"></script>
+</body>
+</html>
