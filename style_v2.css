@@ -1,55 +1,48 @@
-/* TEMA LOBBY & BACKGROUND */
-.lobby-bg {
-    background: #000 url('https://images.unsplash.com/photo-1511193311914-0346f16efe90?q=80&w=2073') no-repeat center center fixed;
-    background-size: cover;
-    margin: 0; padding: 0;
-    font-family: 'Segoe UI', sans-serif;
-}
-
-.overlay {
-    background: rgba(0, 0, 0, 0.75);
-    min-height: 100vh;
-    display: flex; align-items: center; justify-content: center;
-    padding: 15px;
-}
-
-.login-box {
-    background: rgba(20, 20, 35, 0.95);
-    padding: 30px; border-radius: 20px;
-    width: 100%; max-width: 360px;
-    border: 2px solid #ffd700;
-    text-align: center;
-    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
-}
-
-/* INPUT AGAR JELAS TERBACA (TEKS HITAM) */
-input[type="text"], select {
-    width: 100%;
-    padding: 15px;
-    margin: 10px 0;
-    border-radius: 10px;
-    border: 2px solid #ffd700;
-    background: #ffffff; /* Latar Putih */
-    color: #000000;    /* Tulisan Hitam */
-    font-size: 16px;
-    font-weight: bold;
-    box-sizing: border-box;
-}
-
-.title-mystic { color: #ffd700; font-size: 26px; text-shadow: 2px 2px #000; margin-bottom: 20px; }
-
-button {
-    width: 100%; padding: 16px; border-radius: 12px; border: none;
-    font-weight: bold; font-size: 17px; cursor: pointer; margin-top: 10px;
-    transition: 0.3s;
-}
-
-.btn-gold { background: linear-gradient(#ffd700, #b8860b); color: #000; }
-.btn-gold:active { transform: scale(0.95); }
-.btn-blue { background: #3b82f6; color: #fff; }
-
-/* TAMPILAN DALAM GAME (ROOM) */
+/* Latar Belakang Meja Hijau Domino */
 .game-body { 
     background: radial-gradient(circle, #0a4d28 0%, #052915 100%) !important; 
-    color: white; padding: 20px; display: flex; flex-direction: column; align-items: center;
+    color: white; 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0; padding: 20px;
+    display: flex; flex-direction: column; align-items: center; min-height: 100vh;
 }
+
+/* Desain Kartu Domino (Kuning Titik Merah) */
+.domino-card-real {
+    background: #ffcc00; /* Kuning cerah */
+    border: 2px solid #000;
+    border-radius: 8px;
+    width: 60px; height: 100px;
+    display: flex; flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px;
+    box-shadow: 3px 3px 5px rgba(0,0,0,0.5);
+}
+
+.domino-card-real .top, .domino-card-real .bottom {
+    font-size: 24px; font-weight: bold; color: #cc0000; /* Merah titik */
+}
+
+.domino-card-real .line {
+    width: 100%; height: 2px; background: #000;
+}
+
+/* Area Kartu */
+#myCardsArea {
+    display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; justify-content: center;
+}
+
+/* Daftar Pemain */
+.player-card {
+    background: rgba(0,0,0,0.5);
+    padding: 10px; border-radius: 10px; margin-bottom: 5px; width: 300px;
+    display: flex; justify-content: space-between; border: 1px solid #ffd700;
+}
+
+/* Tombol */
+button {
+    width: 100%; max-width: 300px; padding: 15px; border-radius: 10px;
+    border: none; font-weight: bold; cursor: pointer; margin-top: 10px;
+}
+.btn-gold { background: linear-gradient(#ffd700, #b8860b); color: #000; }
