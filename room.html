@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Room Domino</title>
+    <title>Meja Domino</title>
     <link rel="stylesheet" href="style_v2.css">
 </head>
 <body class="game-body">
-    <h2 id="roomCode">DOMINO MYSTIC</h2>
+    <h2 id="roomCodeDisplay">MENGHUBUNGKAN...</h2>
     
-    <div id="playerList"></div>
+    <div id="playerList" style="width:100%; max-width:400px; margin-bottom:20px;"></div>
 
     <div id="myCardsArea"></div>
 
-    <div style="margin-top: 30px; width: 100%; display: flex; flex-direction: column; align-items: center;">
-        <button onclick="setReady()" class="btn-gold">SIAP (READY)</button>
-        <button onclick="resetGame()" style="background: #cc0000; color: white;">RESET GAME</button>
+    <div style="margin-top:30px">
+        <button id="readyBtn" class="btn-gold">SIAP (READY)</button>
+        <button onclick="localStorage.clear(); window.location.href='index.html'" style="background:red; color:white; margin-top:10px; border:none; padding:10px; border-radius:5px;">KELUAR</button>
     </div>
 
     <script type="module" src="room_v2.js"></script>
