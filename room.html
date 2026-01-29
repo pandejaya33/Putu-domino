@@ -3,29 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Domino Mystic Room</title>
+    <title>Room Domino</title>
     <link rel="stylesheet" href="style_v2.css">
 </head>
 <body class="game-body">
-    <div class="container">
-        <div class="header-room">
-            <h2 id="roomTitle">🎴 DOMINO MYSTIC</h2>
-            <p class="status-mode">MODE: <span id="roomCode">Menghubungkan...</span></p>
-        </div>
+    <h2 id="roomCode">DOMINO MYSTIC</h2>
+    
+    <div id="playerList"></div>
 
-        <div id="playerList" class="player-grid"></div>
+    <div id="myCardsArea"></div>
 
-        <div id="kartuSaya" class="kartuArea"></div>
-
-        <div class="controls">
-            <button id="btnReady" class="btn-primary" onclick="setReady()">SIAP (READY)</button>
-            <button id="btnLanjut" class="btn-action" onclick="ambilKartuLanjut()" style="display:none;">+ AMBIL KARTU</button>
-            <button id="btnReset" class="btn-danger" onclick="mainLagi()">RESET GAME</button>
-        </div>
+    <div style="margin-top: 30px; width: 100%; display: flex; flex-direction: column; align-items: center;">
+        <button onclick="setReady()" class="btn-gold">SIAP (READY)</button>
+        <button onclick="resetGame()" style="background: #cc0000; color: white;">RESET GAME</button>
     </div>
-
-    <audio id="sfxCard" src="https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3"></audio>
-    <audio id="sfxClick" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
 
     <script type="module" src="room_v2.js"></script>
 </body>
