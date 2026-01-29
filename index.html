@@ -19,8 +19,8 @@
                 <option value="bererong">Mode Bererong (4 Kartu)</option>
             </select>
 
-            <label style="color: white; display: flex; align-items: center; justify-content: center; gap: 8px; margin: 10px 0;">
-                <input type="checkbox" id="vsBot" style="width: 18px; height: 18px;"> vs Komputer
+            <label style="color: white; display: flex; align-items: center; justify-content: center; gap: 10px; margin: 15px 0; cursor: pointer;">
+                <input type="checkbox" id="vsBot" style="width: 20px; height: 20px;"> Main vs Komputer
             </label>
 
             <button id="btnBuat" class="btn-gold">BUAT ROOM</button>
@@ -31,11 +31,9 @@
     <script type="module">
         import { buatRoom, gabungRoom } from "./game.js";
 
+        // Hubungkan tombol ke fungsi JavaScript
         document.getElementById('btnBuat').onclick = () => {
-            const name = document.getElementById("playerName").value || "Player";
-            localStorage.setItem("playerName", name);
-            localStorage.setItem("gameType", document.getElementById("vsBot").checked ? "vs_bot" : "multiplayer");
-            localStorage.setItem("mode", document.getElementById("mode").value);
+            simpanDataKeLocal();
             buatRoom();
         };
 
@@ -43,9 +41,16 @@
             const code = document.getElementById("joinCode").value;
             if(!code) return alert("Masukkan Kode Room!");
             localStorage.setItem("roomId", code);
-            localStorage.setItem("playerName", document.getElementById("playerName").value || "Player");
+            simpanDataKeLocal();
             gabungRoom();
         };
+
+        function simpanDataKeLocal() {
+            const name = document.getElementById("playerName").value || "Player";
+            localStorage.setItem("playerName", name);
+            localStorage.setItem("gameType", document.getElementById("vsBot").checked ? "vs_bot" : "multiplayer");
+            localStorage.setItem("mode", document.getElementById("mode").value);
+        }
     </script>
 </body>
 </html>
