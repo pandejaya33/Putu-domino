@@ -1,7 +1,7 @@
 export function buatDeck() {
     let deck = [];
-    for (let i = 0; i < 7; i++) {
-        for (let j = i; j < 7; j++) {
+    for (let i = 0; i <= 6; i++) {
+        for (let j = i; j <= 6; j++) {
             deck.push({ left: i, right: j });
         }
     }
@@ -9,16 +9,17 @@ export function buatDeck() {
 }
 
 export function buatRoom() {
+    // Membuat ID unik untuk room
     const id = Math.random().toString(36).substring(2, 7);
     localStorage.setItem("roomId", id);
-    localStorage.setItem("playerId", "p_" + Math.random().toString(36).substring(2, 5));
-    window.location.href = "room.html"; // Pastikan nama file tujuan benar
+    // Membuat ID unik untuk player
+    localStorage.setItem("playerId", "p_" + Math.random().toString(36).substring(2, 6));
+    window.location.href = "room.html"; 
 }
 
 export function gabungRoom() {
-    const id = localStorage.getItem("roomId");
-    if (id) {
-        localStorage.setItem("playerId", "p_" + Math.random().toString(36).substring(2, 5));
-        window.location.href = "room.html";
-    }
+    const code = localStorage.getItem("roomId");
+    if (!code) return alert("Kode Room tidak ditemukan!");
+    localStorage.setItem("playerId", "p_" + Math.random().toString(36).substring(2, 6));
+    window.location.href = "room.html";
 }
