@@ -1,61 +1,61 @@
-body { 
-    background: #0f172a; 
-    color: white; 
-    font-family: sans-serif; 
-    text-align: center; 
+/* Tema Background & Overlay */
+.game-body { 
+    background: url('https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=2094') no-repeat center center fixed;
+    background-size: cover;
+    color: white; font-family: 'Segoe UI', Roboto, sans-serif;
     margin: 0; padding: 20px;
+    display: flex; justify-content: center;
 }
 
-.container { max-width: 400px; margin: auto; }
+.container { 
+    background: rgba(15, 23, 42, 0.9); 
+    padding: 25px; border-radius: 20px; 
+    width: 100%; max-width: 450px;
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+}
 
-#playerList { margin-bottom: 20px; }
-
+/* Daftar Pemain */
+.player-grid { margin-bottom: 20px; }
 .player-card {
-    background: rgba(255,255,255,0.1);
-    padding: 10px; margin: 5px 0;
-    border-radius: 8px; display: flex; justify-content: space-between;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 12px; margin: 8px 0; border-radius: 12px;
+    display: flex; justify-content: space-between; align-items: center;
+    border-left: 4px solid #ffd700;
 }
 
-button {
-    width: 100%; padding: 15px; margin: 5px 0;
-    border: none; border-radius: 8px; font-weight: bold; cursor: pointer;
-}
-
-#btnReady { background: #10b981; color: white; }
-#btnBot { background: #6366f1; color: white; }
-#btnLanjut { background: #3b82f6; color: white; font-size: 18px; }
-#btnReset { background: #ef4444; color: white; margin-top: 50px; opacity: 0.7; }
-
-/* Visual Kartu Domino Kuning */
-.kartuArea { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 20px 0; }
-
+/* Visual Kartu Domino Kuning (Tampak Depan) */
 .domino-card-real {
-    background: #ffeb3b; 
-    width: 65px; height: 115px;
-    border: 2px solid #000; border-radius: 6px;
+    background: #ffeb3b; width: 65px; height: 115px;
+    border: 2px solid #000; border-radius: 8px;
     display: flex; flex-direction: column;
-    box-shadow: 4px 4px 10px rgba(0,0,0,0.5);
+    box-shadow: 4px 4px 12px rgba(0,0,0,0.6);
 }
 
-.half {
-    height: 50%; width: 100%; position: relative;
-    display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr);
-    padding: 6px; box-sizing: border-box;
+/* Visual Kartu Batik (Tampak Belakang/Tertutup) */
+.domino-card-back {
+    background: #8b0000 url('https://www.transparenttextures.com/patterns/batik-fractal.png');
+    width: 65px; height: 115px;
+    border: 2px solid #ffd700; border-radius: 8px;
+    box-shadow: 4px 4px 12px rgba(0,0,0,0.6);
 }
 
+/* Komponen Titik (Dots) */
+.half { height: 50%; width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); padding: 6px; box-sizing: border-box; }
 .line { width: 90%; height: 2px; background: #8b0000; margin: 0 auto; }
+.dot { background: #d32f2f; border-radius: 50%; width: 10px; height: 10px; align-self: center; justify-self: center; }
 
-.dot {
-    background: #d32f2f; border-radius: 50%;
-    width: 10px; height: 10px; align-self: center; justify-self: center;
-}
+/* Tombol-tombol */
+button { border: none; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.2s; width: 100%; padding: 15px; margin: 5px 0; }
+.btn-primary { background: #10b981; color: white; }
+.btn-action { background: #3b82f6; color: white; font-size: 1.1rem; }
+.btn-danger { background: #ef4444; color: white; margin-top: 30px; opacity: 0.6; }
 
-/* Posisi Titik */
+/* Grid Posisi Titik */
+.center { grid-area: 2 / 2; }
 .top-left { grid-area: 1 / 1; }
 .top-right { grid-area: 1 / 3; }
 .mid-left { grid-area: 2 / 1; }
-.center { grid-area: 2 / 2; }
 .mid-right { grid-area: 2 / 3; }
 .bottom-left { grid-area: 3 / 1; }
 .bottom-right { grid-area: 3 / 3; }
-
