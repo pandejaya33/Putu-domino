@@ -3,44 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Domino Mystic - Lobby</title>
+    <title>Domino Mystic</title>
     <link rel="stylesheet" href="style_v2.css">
 </head>
-<body class="lobby-bg">
+<body>
     <div class="login-box">
-        <h1 style="color:#ffd700; text-shadow: 2px 2px #000;">🎴 DOMINO MYSTIC</h1>
-        <div class="form-group">
-            <input type="text" id="playerName" placeholder="Nama Kamu (Wajib)">
-            <input type="text" id="joinCode" placeholder="Kode Room (untuk gabung)">
-            <select id="mode">
-                <option value="spirit">Mode Spirit (3 Kartu)</option>
-                <option value="bererong">Mode Bererong (4 Kartu)</option>
-            </select>
-        </div>
+        <h1 style="color:#ffd700; margin:0;">DOMINO MYSTIC</h1>
+        <input type="text" id="playerName" placeholder="Nama Kamu (Wajib)">
+        <input type="text" id="joinCode" placeholder="Kode Room (untuk gabung)">
+        <select id="mode">
+            <option value="spirit">Mode Spirit (3 Kartu)</option>
+            <option value="bererong">Mode Bererong (4 Kartu)</option>
+        </select>
         <button id="btnBuat" class="btn-gold">BUAT ROOM</button>
-        <button id="btnGabung" class="btn-gold" style="background: linear-gradient(#4facfe, #00f2fe);">GABUNG ROOM</button>
+        <button id="btnGabung" class="btn-gold" style="background:#add8e6">GABUNG ROOM</button>
     </div>
 
     <script type="module">
         import { buatRoom, gabungRoom } from "./game.js";
-        
-        const nameInput = document.getElementById("playerName");
-        const modeInput = document.getElementById("mode");
-        const joinInput = document.getElementById("joinCode");
-
+        const nI = document.getElementById("playerName");
         document.getElementById("btnBuat").onclick = () => {
-            const name = nameInput.value.trim();
-            if (!name) return alert("Eits! Nama harus diisi dulu.");
-            localStorage.setItem("playerName", name);
-            localStorage.setItem("mode", modeInput.value);
+            if(!nI.value) return alert("Isi nama!");
+            localStorage.setItem("playerName", nI.value);
+            localStorage.setItem("mode", document.getElementById("mode").value);
             buatRoom();
         };
-
         document.getElementById("btnGabung").onclick = () => {
-            const name = nameInput.value.trim();
-            const code = joinInput.value.trim();
-            if (!name || !code) return alert("Nama dan Kode Room wajib diisi!");
-            localStorage.setItem("playerName", name);
+            const code = document.getElementById("joinCode").value;
+            if(!nI.value || !code) return alert("Nama & Kode wajib!");
+            localStorage.setItem("playerName", nI.value);
             localStorage.setItem("roomId", code.toUpperCase());
             gabungRoom();
         };
