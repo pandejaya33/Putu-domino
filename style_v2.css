@@ -1,38 +1,28 @@
-/* GAYA KARTU TERTUTUP */
+/* KARTU TERTUTUP (Hidden Style) */
 .domino-card-real.hidden-style {
-    background: linear-gradient(135, #444, #222);
-    border: 2px solid #ffd700;
+    background: linear-gradient(135, #333, #111) !important;
+    border: 2px solid #ffd700 !important;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
-.card-back {
-    font-size: 24px;
-    color: #ffd700;
-    font-weight: bold;
-}
+.card-back { font-size: 35px; color: #ffd700; font-weight: bold; }
 
-/* STATUS SIAP */
+/* INDIKATOR SIAP */
 .player-item.ready-status {
+    background: rgba(0, 255, 0, 0.15) !important;
     border-left: 5px solid #00ff00 !important;
-    background: rgba(0, 255, 0, 0.1) !important;
 }
 
-/* Sisanya tetap sama seperti sebelumnya agar layout tidak hancur */
-body, .game-body { 
-    background: radial-gradient(circle, #0a4d28 0%, #052915 100%) !important;
-    color: white; font-family: 'Segoe UI', sans-serif; margin: 0;
-    display: flex; flex-direction: column; align-items: center; min-height: 100vh;
+/* LOBBY FIX (Agar tidak berantakan lagi) */
+.login-box {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 15px; margin-top: 50px; width: 90%; max-width: 350px;
 }
-.player-item {
-    background: rgba(0,0,0,0.5); padding: 10px; margin: 5px; border-radius: 8px; 
-    width: 300px; display: flex; justify-content: space-between; border: 1px solid #444;
+input, select { width: 100%; padding: 12px; border-radius: 8px; border: none; text-align: center; }
+
+/* AREA KARTU */
+#myCardsArea { 
+    display: flex; flex-wrap: wrap; justify-content: center; 
+    gap: 10px; margin: 20px 0; 
 }
-.domino-card-real {
-    background: #ffcc00; border: 2px solid #000; border-radius: 10px;
-    width: 65px; height: 110px; display: flex; flex-direction: column;
-    justify-content: space-around; align-items: center; margin: 8px;
-    box-shadow: 4px 4px 10px rgba(0,0,0,0.6);
-}
-.dot-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; width: 75%; height: 40px; align-items: center; justify-items: center; }
-.dot { width: 9px; height: 9px; background-color: #cc0000; border-radius: 50%; visibility: hidden; }
-.dot.active { visibility: visible; }
-.line { width: 85%; height: 2px; background: #000; }
-.btn-gold { background: linear-gradient(#ffd700, #b8860b); color: #000; padding: 15px; border-radius: 10px; font-weight: bold; border: none; cursor: pointer; width: 250px; }
