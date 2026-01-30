@@ -5,64 +5,75 @@ import { buatDeck } from "./game.js";
 const rId = localStorage.getItem("roomId");
 const pId = localStorage.getItem("playerId");
 const pName = localStorage.getItem("playerName");
-
-if (!rId || !pName) { window.location.href = "index.html"; }
-
 const roomRef = doc(db, "rooms", rId);
 
-// Inisialisasi Room
+// Fungsi Gambar Titik Domino
+function getDotsHtml(num) {
+    const p = { 0:[], 1:[4], 2:[0,8], 3:[0,4,8], 4:[0,2,6,8], 5:[0,2,4,6,8], 6:[0,2,3,5,6,8] };
+    let h = '<div class="dot-container">';
+    for (let i = 0; i < 9; i++) h += `<div class="dot ${p[num].includes(i) ? 'active' : ''}"></div>`;
+    return h + '</div>';
+}
+
+// Inisialisasi Player di dalam Room
 (async () => {
     const snap = await getDoc(roomRef);
     if (!snap.exists()) {
-        await setDoc(roomRef, { players: [{id: pId, name: pName, ready: false, cards: []}], started: false });
+        await setDoc(roomRef, { 
+            players: [{id: pId, name: pName, cards: []}], 
+            deck: buatDeck(), 
+            started: false 
+        });
     } else {
         let players = snap.data().players || [];
         if (!players.find(p => p.id === pId)) {
-            players.push({id: pId, name: pName, ready: false, cards: []});
+            players.push({id: pId, name: pName, cards: []});
             await updateDoc(roomRef, { players });
         }
     }
 })();
 
-// Fungsi Tombol Ready
-document.getElementById('readyBtn').onclick = async () => {
+// Fungsi Tarik Kartu (Pencet Ready)
+window.setReady = async () => {
     const snap = await getDoc(roomRef);
-    let players = [...snap.data().players];
+    let data = snap.data();
+    let players = [...data.players];
+    let deck = [...data.deck];
     const idx = players.findIndex(p => p.id === pId);
-    players[idx].ready = true;
 
-    if (players.every(p => p.ready) && players.length >= 1) {
-        const deck = buatDeck();
-        players.forEach(p => { p.cards = deck.splice(0, 3); });
-        await updateDoc(roomRef, { players, started: true });
-    } else {
-        await updateDoc(roomRef, { players });
+    // Ambil 1 kartu dari deck jika belum mencapai batas
+    if (players[idx].cards.length < 4) {
+        const kartuBaru = deck.shift();
+        players[idx].cards.push(kartuBaru);
+        await updateDoc(roomRef, { players, deck, started: true });
     }
 };
 
-// Pantau Perubahan
+// Monitor Perubahan Real-time
 onSnapshot(roomRef, (snap) => {
     if (!snap.exists()) return;
     const data = snap.data();
     
-    document.getElementById("roomCodeDisplay").innerText = `KODE: ${rId}`;
-    
-    const list = document.getElementById("playerList");
-    list.innerHTML = data.players.map(p => `
-        <div class="player-card" style="border: 1px solid ${p.ready ? '#ffd700' : '#555'}">
-            <span>${p.name} ${p.ready ? '✅' : '⏳'}</span>
-            <span>${p.cards ? p.cards.length : 0} KRT</span>
-        </div>
-    `).join('');
+    // Tampilkan List Pemain
+    const listArea = document.getElementById("playerList");
+    if (listArea) {
+        listArea.innerHTML = data.players.map(p => `
+            <div class="player-item">
+                <span>${p.name}</span>
+                <span>${p.cards.length} KRT</span>
+            </div>
+        `).join('');
+    }
 
-    const area = document.getElementById("myCardsArea");
+    // Tampilkan Kartu Kuning Titik Merah Milik Sendiri
     const me = data.players.find(p => p.id === pId);
-    if (data.started && me && me.cards.length > 0) {
-        area.innerHTML = me.cards.map(c => `
+    const cardArea = document.getElementById("myCardsArea");
+    if (cardArea && me && me.cards) {
+        cardArea.innerHTML = me.cards.map(c => `
             <div class="domino-card-real">
-                <div class="top">${c.left}</div>
+                ${getDotsHtml(c.left)}
                 <div class="line"></div>
-                <div class="bottom">${c.right}</div>
+                ${getDotsHtml(c.right)}
             </div>
         `).join('');
     }
