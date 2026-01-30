@@ -25,18 +25,17 @@ window.setReady = async () => {
     if (players[idx].cards.length < 4) {
         const kartuBaru = deck.shift();
         players[idx].cards.push(kartuBaru);
-        await updateDoc(roomRef, { players, deck, started: true });
+        await updateDoc(roomRef, { players, deck });
     }
 };
 
-// Tombol MAIN LAGI (Reset Meja)
+// Tombol MAIN LAGI (Reset Kartu)
 window.mainLagi = async () => {
     const snap = await getDoc(roomRef);
     let players = snap.data().players.map(p => ({ ...p, cards: [] }));
     await updateDoc(roomRef, { 
         players: players, 
-        deck: buatDeck(), 
-        started: false 
+        deck: buatDeck() 
     });
 };
 
@@ -44,17 +43,19 @@ onSnapshot(roomRef, (snap) => {
     if (!snap.exists()) return;
     const data = snap.data();
     
-    // KODE & MODE TERLIHAT LAGI
-    document.getElementById("infoDisplay").innerText = `MODE: KODE: ${rId} (${localStorage.getItem("mode")?.toUpperCase() || 'SPIRIT'})`;
+    // Tampilkan KODE & MODE (Sesuai Foto)
+    const mode = localStorage.getItem("mode") || "SPIRIT";
+    document.getElementById("infoDisplay").innerText = `MODE: KODE: ${rId} (${mode.toUpperCase()})`;
 
-    const listArea = document.getElementById("playerList");
-    listArea.innerHTML = data.players.map(p => `
+    // Daftar Pemain
+    document.getElementById("playerList").innerHTML = data.players.map(p => `
         <div class="player-item">
             <span>${p.name}</span>
             <span>${p.cards.length} KRT</span>
         </div>
     `).join('');
 
+    // Kartu Titik Merah
     const me = data.players.find(p => p.id === pId);
     if (me && me.cards) {
         document.getElementById("myCardsArea").innerHTML = me.cards.map(c => `
