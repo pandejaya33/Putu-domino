@@ -3,24 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Domino Mystic</title>
     <link rel="stylesheet" href="style_v2.css">
 </head>
 <body class="game-body">
-    <h1>🎴 DOMINO MYSTIC</h1>
-    
-    <p id="infoDisplay"></p>
-    
+    <h2 style="color:#ffd700; margin-top:20px;">DOMINO MYSTIC</h2>
+    <p id="infoDisplay" style="font-weight:bold; color:#ccc;"></p>
     <div id="playerList"></div>
-
-    <div id="myCardsArea" style="display: flex; flex-wrap: wrap; justify-content: center; margin: 20px 0;"></div>
-
-    <div style="display: flex; flex-direction: column; gap: 10px; align-items: center; margin-bottom: 30px;">
-        <button onclick="setReady()" class="btn-gold">TARIK KARTU (READY)</button>
+    <div id="myCardsArea" style="display:flex; flex-wrap:wrap; justify-content:center;"></div>
+    <div style="margin-top:20px; display:flex; flex-direction:column; align-items:center; gap:10px;">
+        <button onclick="setReady()" class="btn-gold" style="width:250px;">TARIK KARTU (READY)</button>
         <button onclick="mainLagi()" class="btn-reset">MAIN LAGI (RESET)</button>
-        <button onclick="localStorage.clear(); window.location.href='index.html'" class="btn-keluar">KELUAR</button>
+        <button onclick="localStorage.clear(); window.location.href='index.html'" style="color:#ff4444; background:none; border:none; cursor:pointer; font-weight:bold;">KELUAR</button>
     </div>
-
     <script type="module" src="room_v2.js"></script>
 </body>
 </html>
