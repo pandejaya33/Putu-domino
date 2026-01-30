@@ -10,14 +10,11 @@ export function buatDeck() {
 
 export function buatRoom() {
     const id = Math.random().toString(36).substring(2, 7).toUpperCase();
-    const pId = "p_" + Math.random().toString(36).substring(2, 6);
     localStorage.setItem("roomId", id);
-    localStorage.setItem("playerId", pId);
+    localStorage.setItem("playerId", "p_" + Math.random().toString(36).substring(2, 6));
     window.location.href = "room.html"; 
 }
 
 export function gabungRoom() {
-    const pId = "p_" + Math.random().toString(36).substring(2, 6);
-    localStorage.setItem("playerId", pId);
     window.location.href = "room.html";
 }
