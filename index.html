@@ -3,36 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Domino Mystic Classic Fix</title>
+    <title>Domino Mystic Multiplayer</title>
     <style>
         body { background: radial-gradient(circle, #0a4d28 0%, #052915 100%); color: white; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
         .box { background: rgba(0,0,0,0.9); padding: 30px; border-radius: 20px; border: 2px solid #ffd700; margin-top: 30px; text-align: center; width: 320px; display: flex; flex-direction: column; gap: 15px; }
         input, select { padding: 12px; border-radius: 8px; border: none; text-align: center; font-weight: bold; }
         .btn-gold { background: linear-gradient(#ffd700, #b8860b); color: #000; padding: 15px; border-radius: 12px; font-weight: bold; border: none; cursor: pointer; }
         
+        /* DAFTAR PEMAIN LAIN */
+        #playerList { background: rgba(255,255,255,0.1); padding: 10px; border-radius: 10px; margin-bottom: 20px; font-size: 14px; border: 1px solid #ffd700; }
+        .player-name { display: inline-block; margin: 5px; padding: 5px 10px; background: #ffd700; color: black; border-radius: 20px; font-weight: bold; font-size: 12px; }
+
         .domino-card { 
             background: #ffcc00; border: 2px solid #000; border-radius: 12px; 
             width: 75px; height: 130px; margin: 8px; display: flex; 
             flex-direction: column; justify-content: space-around; align-items: center; 
             box-shadow: 0 5px 15px rgba(0,0,0,0.5); cursor: pointer; position: relative;
         }
-        .card-half { 
-            display: grid; grid-template-columns: repeat(3, 1fr); 
-            grid-template-rows: repeat(3, 1fr); width: 50px; height: 50px; gap: 3px;
-        }
+        .card-half { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); width: 50px; height: 50px; gap: 3px; }
         .dot { background: #cc0000; border-radius: 50%; width: 12px; height: 12px; visibility: hidden; }
         .dot.active { visibility: visible; }
         .line { width: 90%; height: 3px; background: #000; margin: 2px 0; border-radius: 2px; }
         
-        /* FIX: Menghilangkan titik merah saat kartu tertutup */
         .domino-card.closed { background: #1a1a1a; border-color: #ffd700; }
         .domino-card.closed .card-half, .domino-card.closed .line { display: none !important; }
-        .domino-card.closed::after { 
-            content: "?"; position: absolute; font-size: 60px; 
-            color: #cc0000; font-weight: bold; top: 50%; left: 50%; 
-            transform: translate(-50%, -50%); display: block;
-        }
-
+        .domino-card.closed::after { content: "?"; position: absolute; font-size: 60px; color: #cc0000; font-weight: bold; top: 50%; left: 50%; transform: translate(-50%, -50%); display: block; }
         #player-label { font-size: 1.2em; color: #ffd700; margin: 15px 0; font-weight: bold; }
     </style>
 </head>
@@ -52,6 +47,12 @@
 
     <div id="gameRoom" style="display:none; text-align:center; width: 100%; padding-top: 20px;">
         <h2 id="displayKode" style="color:#ffd700;"></h2>
+        
+        <div style="width: 300px; margin: 0 auto;">
+            <p style="margin-bottom: 5px; font-size: 12px; color: #ffd700;">PEMAIN DI ROOM:</p>
+            <div id="playerList">Menunggu pemain...</div>
+        </div>
+
         <div id="player-label"></div>
         <div id="cardArea" style="display:flex; justify-content:center; flex-wrap:wrap;"></div>
         <button id="btnTarik" class="btn-gold" style="width:250px; margin-top: 20px;">TARIK KARTU</button>
@@ -76,15 +77,12 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const pId = Math.random().toString(36).substring(7);
-
         const dotPatterns = [[], [4], [0, 8], [0, 4, 8], [0, 2, 6, 8], [0, 2, 4, 6, 8], [0, 3, 6, 2, 5, 8]];
 
         function createDots(num) {
             let html = '<div class="card-half">';
             const pattern = dotPatterns[num];
-            for(let i=0; i<9; i++) {
-                html += `<div class="dot ${pattern.includes(i) ? 'active' : ''}"></div>`;
-            }
+            for(let i=0; i<9; i++) { html += `<div class="dot ${pattern.includes(i) ? 'active' : ''}"></div>`; }
             return html + '</div>';
         }
 
@@ -96,9 +94,15 @@
             onSnapshot(doc(db, "rooms", rId), (snap) => {
                 if(!snap.exists()) return;
                 const data = snap.data();
+                
+                // UPDATE DAFTAR SEMUA NAMA PEMAIN
+                document.getElementById("playerList").innerHTML = data.players.map(p => `
+                    <span class="player-name">${p.name} (${p.cards.length} KRT)</span>
+                `).join('');
+
                 const me = data.players.find(p => p.id === pId);
                 if(me) {
-                    document.getElementById("player-label").innerText = me.name + " (" + me.cards.length + " KRT)";
+                    document.getElementById("player-label").innerText = "KARTU ANDA (" + me.name + ")";
                     document.getElementById("cardArea").innerHTML = me.cards.map((c) => {
                         const [top, bot] = c.split('/');
                         return `
@@ -113,8 +117,8 @@
 
             document.getElementById("btnTarik").onclick = async () => {
                 const s = await getDoc(doc(db, "rooms", rId));
-                let d = s.data(); let ps = d.players; let mIdx = ps.findIndex(p => p.id === pId);
-                let max = d.mode === "spirit" ? 3 : 4;
+                let ps = s.data().players; let mIdx = ps.findIndex(p => p.id === pId);
+                let max = s.data().mode === "spirit" ? 3 : 4;
                 if(ps[mIdx].cards.length < max) {
                     ps[mIdx].cards.push(Math.floor(Math.random()*7)+"/"+Math.floor(Math.random()*7));
                     await updateDoc(doc(db, "rooms", rId), { players: ps });
