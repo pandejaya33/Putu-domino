@@ -2,29 +2,35 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Domino Mystic Final Pro - Unique Deck</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Domino Mystic Ultra - Ultimate Fix</title>
     <style>
-        body { background: radial-gradient(circle, #0a4d28 0%, #052915 100%); color: white; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
-        .box { background: rgba(0,0,0,0.9); padding: 30px; border-radius: 20px; border: 2px solid #ffd700; margin-top: 30px; text-align: center; width: 320px; display: flex; flex-direction: column; gap: 15px; }
+        body { background: radial-gradient(circle, #0a4d28 0%, #052915 100%); color: white; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; overflow-x: hidden; }
+        .box { background: rgba(0,0,0,0.9); padding: 25px; border-radius: 20px; border: 2px solid #ffd700; margin-top: 20px; text-align: center; width: 300px; display: flex; flex-direction: column; gap: 12px; }
         input, select { padding: 12px; border-radius: 8px; border: none; text-align: center; font-weight: bold; }
-        .btn-gold { background: linear-gradient(#ffd700, #b8860b); color: #000; padding: 15px; border-radius: 12px; font-weight: bold; border: none; cursor: pointer; transition: 0.3s; }
-        .btn-gold:disabled { background: #444; color: #888; cursor: not-allowed; }
+        .btn-gold { background: linear-gradient(#ffd700, #b8860b); color: #000; padding: 15px; border-radius: 12px; font-weight: bold; border: none; cursor: pointer; transition: 0.3s; font-size: 16px; }
+        .btn-gold:disabled { background: #444; color: #888; cursor: not-allowed; filter: grayscale(1); }
         
-        #playerList { background: rgba(255,255,255,0.1); padding: 10px; border-radius: 10px; margin-bottom: 20px; font-size: 14px; border: 1px solid #ffd700; }
-        .player-name { display: inline-block; margin: 5px; padding: 5px 10px; background: #ffd700; color: black; border-radius: 20px; font-weight: bold; font-size: 11px; }
-        .ready-dot { color: #00ff00; margin-left: 5px; }
-
-        .domino-card { background: #ffcc00; border: 2px solid #000; border-radius: 12px; width: 75px; height: 130px; margin: 8px; display: flex; flex-direction: column; justify-content: space-around; align-items: center; box-shadow: 0 5px 15px rgba(0,0,0,0.5); cursor: pointer; position: relative; }
-        .card-half { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); width: 50px; height: 50px; gap: 3px; }
-        .dot { background: #cc0000; border-radius: 50%; width: 12px; height: 12px; visibility: hidden; }
+        #modeDisplay { background: #ffd700; color: #000; padding: 5px 15px; border-radius: 0 0 15px 15px; font-weight: bold; font-size: 12px; text-transform: uppercase; }
+        #turnIndicator { color: #ffd700; font-size: 1.1em; font-weight: bold; margin: 10px 0; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
+        
+        #playerList { background: rgba(255,255,255,0.1); padding: 8px; border-radius: 10px; margin-bottom: 15px; font-size: 12px; border: 1px solid #ffd700; display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; }
+        .player-name { padding: 4px 8px; background: #333; color: #fff; border-radius: 15px; border: 1px solid transparent; }
+        .player-name.active-turn { background: #ffd700; color: #000; border-color: #fff; transform: scale(1.1); }
+        
+        /* DESAIN KARTU & EFEK INTIP */
+        .card-container { position: relative; width: 75px; height: 130px; margin: 8px; perspective: 1000px; }
+        .domino-card { background: #ffcc00; border: 2px solid #000; border-radius: 12px; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-around; align-items: center; box-shadow: 0 5px 15px rgba(0,0,0,0.5); position: absolute; top:0; left:0; }
+        .card-half { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); width: 45px; height: 45px; gap: 3px; }
+        .dot { background: #cc0000; border-radius: 50%; width: 10px; height: 10px; visibility: hidden; }
         .dot.active { visibility: visible; }
-        .line { width: 90%; height: 3px; background: #000; margin: 2px 0; border-radius: 2px; }
+        .line { width: 90%; height: 3px; background: #000; border-radius: 2px; }
         
-        .domino-card.closed { background: #1a1a1a; border-color: #ffd700; }
-        .domino-card.closed .card-half, .domino-card.closed .line { display: none !important; }
-        .domino-card.closed::after { content: "?"; position: absolute; font-size: 60px; color: #cc0000; font-weight: bold; top: 50%; left: 50%; transform: translate(-50%, -50%); display: block; }
-        #player-label { font-size: 1.2em; color: #ffd700; margin: 15px 0; font-weight: bold; }
+        .card-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #1a1a1a; border: 2px solid #ffd700; border-radius: 12px; z-index: 10; display: flex; justify-content: center; align-items: center; font-size: 60px; color: #cc0000; font-weight: bold; transition: clip-path 0.1s linear, opacity 0.3s; user-select: none; }
+        .card-overlay.opened { opacity: 0; pointer-events: none; }
+
+        /* VOTING STYLE */
+        #voteBox { background: #cc0000; padding: 10px; border-radius: 10px; margin: 10px; display: none; }
     </style>
 </head>
 <body>
@@ -41,16 +47,25 @@
         <button id="btnGabung" class="btn-gold" style="background: #444; color: white;">GABUNG</button>
     </div>
 
-    <div id="gameRoom" style="display:none; text-align:center; width: 100%; padding-top: 20px;">
-        <h2 id="displayKode" style="color:#ffd700;"></h2>
-        <div style="width: 320px; margin: 0 auto;"><p style="margin-bottom: 5px; font-size: 12px; color: #ffd700;">PEMAIN DI ROOM:</p><div id="playerList"></div></div>
-        <div id="player-label"></div>
-        <div id="cardArea" style="display:flex; justify-content:center; flex-wrap:wrap;"></div>
-        <div id="actionArea" style="margin-top: 20px;">
-            <button id="btnTarik" class="btn-gold" style="width:250px;">TARIK KARTU</button>
-            <button id="btnGas" class="btn-gold" style="width:250px; display:none; background: linear-gradient(#00ff00, #008000); color: white;">GAS! 🚀</button>
+    <div id="gameRoom" style="display:none; text-align:center; width: 100%;">
+        <div id="modeDisplay">MODE: -</div>
+        <h2 id="displayKode" style="color:#ffd700; margin-bottom:5px;"></h2>
+        
+        <div id="voteBox">
+            <div id="voteMsg" style="font-weight:bold; margin-bottom:5px;"></div>
+            <button onclick="sendVote(true)" style="background:green; color:white; border:none; padding:8px 15px; border-radius:5px; font-weight:bold; cursor:pointer;">SETUJU</button>
+            <button onclick="sendVote(false)" style="background:black; color:white; border:none; padding:8px 15px; border-radius:5px; font-weight:bold; cursor:pointer;">TOLAK</button>
         </div>
-        <button id="btnMainLagi" style="background: white; color: black; padding: 10px 20px; border-radius: 8px; font-weight: bold; border: none; margin-top: 20px; cursor: pointer;">MAIN LAGI (RESET)</button>
+
+        <div id="turnIndicator">Menunggu...</div>
+        <div id="playerList"></div>
+        <div id="cardArea" style="display:flex; justify-content:center; flex-wrap:wrap;"></div>
+        
+        <div id="actionArea" style="margin-top:20px;">
+            <button id="btnTarik" class="btn-gold" style="width:250px;">TARIK KARTU</button>
+            <button id="btnGas" class="btn-gold" style="width:250px; display:none; background: #00ff00;">GAS! 🚀</button>
+        </div>
+        <button id="btnMainLagi" style="background: white; color: black; padding: 10px 20px; border-radius: 8px; font-weight: bold; border: none; margin: 20px; cursor: pointer;">MAU RESET GAME?</button>
     </div>
 
     <script type="module">
@@ -68,18 +83,22 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        let curRoom = "";
         const pId = Math.random().toString(36).substring(7);
         const dotPatterns = [[], [4], [0, 8], [0, 4, 8], [0, 2, 6, 8], [0, 2, 4, 6, 8], [0, 3, 6, 2, 5, 8]];
 
-        // Fungsi membuat deck 28 kartu unik
+        const sfx = {
+            draw: new Audio('https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3'),
+            flip: new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3'),
+            ready: new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3')
+        };
+
         function generateDeck() {
             let deck = [];
             for (let i = 0; i <= 6; i++) {
-                for (let j = i; j <= 6; j++) {
-                    deck.push(`${i}/${j}`);
-                }
+                for (let j = i; j <= 6; j++) { deck.push(`${i}/${j}`); }
             }
-            return deck.sort(() => Math.random() - 0.5); // Acak tumpukan
+            return deck.sort(() => Math.random() - 0.5);
         }
 
         function createDots(num) {
@@ -90,6 +109,7 @@
         }
 
         function aktifkanRoom(rId) {
+            curRoom = rId;
             document.getElementById("lobby").style.display = "none";
             document.getElementById("gameRoom").style.display = "block";
             document.getElementById("displayKode").innerText = "KODE: " + rId;
@@ -98,72 +118,111 @@
                 if(!snap.exists()) return;
                 const data = snap.data();
                 const players = data.players;
+                const turnIndex = data.turnIndex || 0;
+                const activePlayer = players[turnIndex];
                 const me = players.find(p => p.id === pId);
-                const everyoneReady = players.every(p => p.ready === true);
-                
-                document.getElementById("playerList").innerHTML = players.map(p => `
-                    <span class="player-name">${p.name} (${p.cards.length} KRT) ${p.ready ? '<b class="ready-dot">✓</b>' : ''}</span>
+
+                document.getElementById("modeDisplay").innerText = "MODE: " + data.mode;
+                document.getElementById("turnIndicator").innerText = (activePlayer.id === pId) ? "GILIRAN ANDA!" : "GILIRAN: " + activePlayer.name;
+
+                // UPDATE VOTING UI
+                const vb = document.getElementById("voteBox");
+                if (data.resetVote && data.resetVote.status === "pending") {
+                    vb.style.display = "block";
+                    document.getElementById("voteMsg").innerText = data.resetVote.by + " ingin Reset Game. Setuju?";
+                } else { vb.style.display = "none"; }
+
+                document.getElementById("playerList").innerHTML = players.map((p, idx) => `
+                    <span class="player-name ${idx === turnIndex ? 'active-turn' : ''}">
+                        ${p.name} (${p.cards.length}) ${p.ready ? '✓' : ''}
+                    </span>
                 `).join('');
 
                 if(me) {
-                    document.getElementById("player-label").innerText = "KARTU ANDA (" + me.name + ")";
-                    document.getElementById("cardArea").innerHTML = me.cards.map((c) => {
+                    document.getElementById("cardArea").innerHTML = me.cards.map((c, i) => {
                         const [top, bot] = c.split('/');
-                        return `<div class="domino-card closed" onclick="this.classList.toggle('closed')">${createDots(parseInt(top))}<div class="line"></div>${createDots(parseInt(bot))}</div>`;
+                        return `<div class="card-container"><div class="domino-card">${createDots(parseInt(top))}<div class="line"></div>${createDots(parseInt(bot))}</div><div class="card-overlay" id="overlay-${i}" onpointerdown="startPeel(event, this)">?</div></div>`;
                     }).join('');
 
+                    const isMyTurn = (activePlayer.id === pId);
                     if (me.cards.length === 1 && !me.ready) {
                         document.getElementById("btnTarik").style.display = "none";
                         document.getElementById("btnGas").style.display = "inline-block";
-                    } else if (me.cards.length === 1 && me.ready && !everyoneReady) {
-                        document.getElementById("btnTarik").style.display = "inline-block";
-                        document.getElementById("btnTarik").disabled = true;
-                        document.getElementById("btnTarik").innerText = "MENUNGGU PEMAIN...";
-                        document.getElementById("btnGas").style.display = "none";
                     } else {
                         document.getElementById("btnTarik").style.display = "inline-block";
-                        document.getElementById("btnTarik").disabled = false;
-                        document.getElementById("btnTarik").innerText = "TARIK KARTU";
                         document.getElementById("btnGas").style.display = "none";
+                        document.getElementById("btnTarik").disabled = !isMyTurn || (me.cards.length >= (data.mode === "spirit" ? 3 : 4));
+                        document.getElementById("btnTarik").innerText = isMyTurn ? "TARIK KARTU" : "ANTREAN...";
                     }
                 }
             });
-
-            document.getElementById("btnGas").onclick = async () => {
-                const s = await getDoc(doc(db, "rooms", rId));
-                let ps = s.data().players;
-                let mIdx = ps.findIndex(p => p.id === pId);
-                ps[mIdx].ready = true;
-                await updateDoc(doc(db, "rooms", rId), { players: ps });
-            };
-
-            document.getElementById("btnTarik").onclick = async () => {
-                const s = await getDoc(doc(db, "rooms", rId));
-                let d = s.data(); 
-                let ps = d.players; 
-                let deck = d.deck; // Ambil sisa deck dari database
-                let mIdx = ps.findIndex(p => p.id === pId);
-                let max = d.mode === "spirit" ? 3 : 4;
-
-                if(ps[mIdx].cards.length < max) {
-                    if (deck.length > 0) {
-                        const drawnCard = deck.pop(); // Ambil kartu paling atas
-                        ps[mIdx].cards.push(drawnCard);
-                        await updateDoc(doc(db, "rooms", rId), { players: ps, deck: deck });
-                    } else {
-                        alert("Kartu di tumpukan habis!");
-                    }
-                } else { alert("Maksimal " + max + " kartu!"); }
-            };
-
-            document.getElementById("btnMainLagi").onclick = async () => {
-                const s = await getDoc(doc(db, "rooms", rId));
-                let ps = s.data().players;
-                ps.forEach(p => { p.cards = []; p.ready = false; });
-                // Reset deck menjadi 28 kartu baru
-                await updateDoc(doc(db, "rooms", rId), { players: ps, deck: generateDeck() });
-            };
         }
+
+        // LOGIKA VOTING RESET
+        document.getElementById("btnMainLagi").onclick = async () => {
+            const s = await getDoc(doc(db, "rooms", curRoom));
+            const myName = s.data().players.find(p => p.id === pId).name;
+            await updateDoc(doc(db, "rooms", curRoom), { 
+                resetVote: { status: "pending", by: myName, yesVotes: [pId] } 
+            });
+        };
+
+        window.sendVote = async (agree) => {
+            const s = await getDoc(doc(db, "rooms", curRoom));
+            let d = s.data();
+            if (!agree) {
+                await updateDoc(doc(db, "rooms", curRoom), { resetVote: null });
+                return;
+            }
+            let votes = d.resetVote.yesVotes;
+            if (!votes.includes(pId)) votes.push(pId);
+            
+            if (votes.length >= d.players.length) {
+                // SEMUA SETUJU - RESET GAME
+                let ps = d.players;
+                ps.forEach(p => { p.cards = []; p.ready = false; });
+                await updateDoc(doc(db, "rooms", curRoom), { 
+                    players: ps.sort(() => Math.random() - 0.5), 
+                    deck: generateDeck(), 
+                    turnIndex: 0,
+                    resetVote: null 
+                });
+            } else {
+                await updateDoc(doc(db, "rooms", curRoom), { "resetVote.yesVotes": votes });
+            }
+        };
+
+        // FUNGSI TARIK, GAS, & PEEL TETAP SAMA (Aman)
+        document.getElementById("btnTarik").onclick = async () => {
+            const s = await getDoc(doc(db, "rooms", curRoom));
+            let d = s.data(); let ps = d.players; let deck = d.deck; let tIdx = d.turnIndex;
+            if (ps[tIdx].id !== pId) return;
+            ps[tIdx].cards.push(deck.pop());
+            sfx.draw.play();
+            await updateDoc(doc(db, "rooms", curRoom), { players: ps, deck: deck, turnIndex: (tIdx + 1) % ps.length });
+        };
+
+        document.getElementById("btnGas").onclick = async () => {
+            const s = await getDoc(doc(db, "rooms", curRoom));
+            let ps = s.data().players;
+            ps.find(p => p.id === pId).ready = true;
+            sfx.flip.play();
+            await updateDoc(doc(db, "rooms", curRoom), { players: ps });
+        };
+
+        window.startPeel = function(e, el) {
+            const startY = e.clientY || e.touches[0].clientY;
+            const h = el.clientHeight;
+            function onMove(me) {
+                const currentY = me.clientY || me.touches[0].clientY;
+                const percent = Math.max(0, 100 - ((currentY - startY) / h * 100));
+                if (percent < 20) { el.classList.add('opened'); sfx.flip.play(); cleanup(); }
+                else { el.style.clipPath = `inset(0 0 ${100 - percent}% 0)`; }
+            }
+            function cleanup() { window.removeEventListener('pointermove', onMove); window.removeEventListener('pointerup', cleanup); }
+            window.addEventListener('pointermove', onMove);
+            window.addEventListener('pointerup', cleanup);
+        };
 
         document.getElementById("btnBuat").onclick = async () => {
             const n = document.getElementById("pName").value;
@@ -172,7 +231,7 @@
             await setDoc(doc(db, "rooms", rId), { 
                 mode: document.getElementById("gameMode").value, 
                 players: [{ id: pId, name: n, cards: [], ready: false }],
-                deck: generateDeck() // Buat deck saat room dibuat
+                deck: generateDeck(), turnIndex: 0, resetVote: null
             });
             aktifkanRoom(rId);
         };
@@ -180,11 +239,13 @@
         document.getElementById("btnGabung").onclick = async () => {
             const n = document.getElementById("pName").value;
             const rId = document.getElementById("rCodeInput").value.toUpperCase();
-            if(!n || !rId) return alert("Lengkapi data!");
             const s = await getDoc(doc(db, "rooms", rId));
             if(!s.exists()) return alert("Room tidak ada!");
             let ps = s.data().players;
-            if(!ps.find(p => p.id === pId)) { ps.push({ id: pId, name: n, cards: [], ready: false }); await updateDoc(doc(db, "rooms", rId), { players: ps }); }
+            if(!ps.find(p => p.id === pId)) { 
+                ps.push({ id: pId, name: n, cards: [], ready: false }); 
+                await updateDoc(doc(db, "rooms", rId), { players: ps }); 
+            }
             aktifkanRoom(rId);
         };
     </script>
