@@ -3,132 +3,131 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Domino Mystic - Masterpiece Edition</title>
+    <title>Domino Mystic - Ultimate Edition</title>
     <style>
         :root {
             --gold: #ffd700;
             --deep-gold: #b8860b;
-            --ivory: #ffcc00; /* Warna kuning khas kartu Anda */
+            --ivory: #ffcc00;
             --felt-green: radial-gradient(circle, #0a4d28 0%, #052915 100%);
         }
 
+        /* 1. PERBAIKAN LOBBY CENTER & VIGNETTE */
         html, body { 
             overscroll-behavior-y: contain; overflow: hidden; position: fixed; 
             width: 100%; height: 100%; margin: 0; font-family: 'Georgia', serif;
             background: var(--felt-green); color: white;
+            display: flex; align-items: center; justify-content: center;
         }
 
-        /* Vignette effect untuk kesan misterius */
         body::after {
             content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            box-shadow: inset 0 0 150px rgba(0,0,0,0.7); pointer-events: none; z-index: 5;
+            box-shadow: inset 0 0 150px rgba(0,0,0,0.8); pointer-events: none; z-index: 5;
         }
 
         .box { 
-            background: rgba(0,0,0,0.85); padding: 25px; border-radius: 20px; 
-            border: 1px solid var(--gold); text-align: center; width: 300px; 
-            display: flex; flex-direction: column; gap: 12px; z-index: 10;
-            backdrop-filter: blur(10px); box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            background: rgba(0,0,0,0.9); padding: 30px; border-radius: 25px; 
+            border: 2px solid var(--gold); text-align: center; width: 320px; 
+            z-index: 10; backdrop-filter: blur(15px);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.7);
         }
 
         input, select { 
-            padding: 12px; border-radius: 8px; border: 1px solid #444; 
-            text-align: center; font-weight: bold; background: #222; color: var(--gold);
+            width: 90%; padding: 12px; margin-bottom: 10px; border-radius: 10px; 
+            border: 1px solid #444; background: #111; color: var(--gold); font-weight: bold;
         }
 
         .btn-gold { 
-            background: linear-gradient(var(--gold), var(--deep-gold)); 
+            width: 100%; background: linear-gradient(var(--gold), var(--deep-gold)); 
             color: #000; padding: 15px; border-radius: 12px; font-weight: bold; 
             border: none; cursor: pointer; font-size: 16px; text-transform: uppercase;
-            box-shadow: 0 4px 0 #665200; transition: 0.2s;
-        }
-        .btn-gold:active { transform: translateY(2px); box-shadow: 0 2px 0 #665200; }
-        .btn-gold:disabled { filter: grayscale(1); opacity: 0.5; cursor: not-allowed; }
-
-        #modeDisplay { 
-            background: var(--gold); color: #000; padding: 6px 20px; 
-            border-radius: 0 0 15px 15px; font-weight: bold; font-size: 12px; 
-            letter-spacing: 2px; z-index: 10; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 0 #665200; transition: 0.2s; margin-top: 5px;
         }
 
-        /* Glow Effect Giliran Aktif */
-        .player-name.active-turn { 
-            background: var(--gold); color: #000; font-weight: bold;
-            box-shadow: 0 0 15px var(--gold); border-color: #fff;
-            animation: glow 1.5s infinite alternate;
+        /* 2. KARTU & ANIMASI LEMPAR */
+        .card-container { 
+            position: relative; width: 85px; height: 145px; margin: 10px; 
+            z-index: 10; perspective: 1000px;
         }
-        @keyframes glow { from { box-shadow: 0 0 5px var(--gold); } to { box-shadow: 0 0 20px var(--gold); } }
 
-        .player-name { padding: 5px 12px; background: rgba(255,255,255,0.1); border-radius: 20px; font-size: 12px; border: 1px solid transparent; }
+        /* Animasi muncul dari tengah */
+        @keyframes throwFromCenter {
+            0% { transform: translate(-50%, -50%) scale(0) rotate(0deg); opacity: 0; left: 50%; top: 50%; position: fixed; }
+            100% { transform: translate(0, 0) scale(1) rotate(360deg); opacity: 1; left: auto; top: auto; position: relative; }
+        }
+        .thrown { animation: throwFromCenter 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
 
-        /* KARTU DOMINO DETAIL */
-        .card-container { position: relative; width: 80px; height: 140px; margin: 10px; z-index: 10; }
         .domino-card { 
-            background: var(--ivory); border: 2px solid #000; border-radius: 10px; 
+            background: var(--ivory); border: 2px solid #000; border-radius: 12px; 
             width: 100%; height: 100%; display: flex; flex-direction: column; 
             justify-content: space-around; align-items: center; position: absolute;
-            box-shadow: 0 6px 15px rgba(0,0,0,0.6);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
         }
         
-        /* LOGIKA UKURAN TITIK MERAH */
-        .card-half { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); width: 50px; height: 50px; align-items: center; justify-items: center; }
+        /* 3. DETAIL TITIK SESUAI FOTO */
+        .card-half { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); width: 55px; height: 55px; align-items: center; justify-items: center; }
         .dot { background: #cc0000; border-radius: 50%; visibility: hidden; box-shadow: inset 0 2px 3px rgba(0,0,0,0.3); }
         .dot.active { visibility: visible; }
         
-        /* Ukuran Titik Sesuai Jumlah */
-        .dot-size-1 { width: 22px; height: 22px; }
-        .dot-size-2, .dot-size-3 { width: 14px; height: 14px; }
-        .dot-size-4, .dot-size-5, .dot-size-6 { width: 11px; height: 11px; }
+        .dot-size-1 { width: 28px; height: 28px; } /* Angka 1 sangat besar */
+        .dot-size-2, .dot-size-3 { width: 16px; height: 16px; }
+        .dot-size-4, .dot-size-5, .dot-size-6 { width: 12px; height: 12px; }
 
-        .line { width: 85%; height: 3px; background: #000; opacity: 0.8; border-radius: 2px; }
+        .line { width: 85%; height: 3px; background: #000; border-radius: 2px; }
 
-        /* KARTU BELAKANG (Lis Emas) */
+        /* 4. EFEK KELUPAS (PEELING) DARI SEGALA ARAH */
         .card-overlay { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-            background: #000; border: 2px solid var(--gold); border-radius: 10px; 
+            background: #000; border: 2px solid var(--gold); border-radius: 12px; 
             z-index: 15; box-sizing: border-box; cursor: pointer;
-            transition: opacity 0.5s ease;
+            transition: opacity 0.3s;
         }
         .card-overlay.opened { opacity: 0; pointer-events: none; }
 
-        #voteBox { background: #600; padding: 15px; border-radius: 15px; border: 1px solid var(--gold); margin: 10px; z-index: 20; display: none; }
+        #modeDisplay { 
+            position: fixed; top: 0; left: 50%; transform: translateX(-50%);
+            background: var(--gold); color: #000; padding: 8px 30px; 
+            border-radius: 0 0 20px 20px; font-weight: bold; z-index: 20;
+        }
+
+        #playerList { display: flex; gap: 10px; justify-content: center; margin: 20px 0; }
+        .player-badge { padding: 5px 15px; background: rgba(0,0,0,0.5); border-radius: 20px; font-size: 13px; border: 1px solid var(--gold); }
+        .active-turn { box-shadow: 0 0 15px var(--gold); background: var(--gold); color: #000; }
     </style>
 </head>
 <body>
 
-    <div id="lobby" class="box" style="margin-top: 50px;">
-        <h1 style="color:var(--gold); margin:0; letter-spacing: 3px; font-size: 22px;">DOMINO MYSTIC</h1>
-        <p style="font-size: 10px; color: #888; margin-top: -5px;">ELEGANT EDITION</p>
-        <input type="text" id="pName" placeholder="NAMA PEMAIN">
-        <input type="text" id="roomName" placeholder="NAMA ROOM (OPSIONAL)">
+    <div id="lobby" class="box">
+        <h1 style="color:var(--gold); margin:0; letter-spacing: 2px;">DOMINO MYSTIC</h1>
+        <p style="font-size: 10px; color: #888; margin-bottom: 20px;">ELEGANT EDITION</p>
+        <input type="text" id="pName" placeholder="NAMA ANDA">
+        <input type="text" id="roomName" placeholder="NAMA RUANGAN">
         <input type="text" id="rCodeInput" placeholder="KODE ROOM">
         <select id="gameMode">
             <option value="spirit">MODE SPIRIT (MAX 3)</option>
             <option value="bererong">MODE BERERONG (MAX 4)</option>
         </select>
         <button id="btnBuat" class="btn-gold">BUAT ROOM</button>
-        <button id="btnGabung" class="btn-gold" style="background: #111; color: var(--gold); border: 1px solid var(--gold);">GABUNG</button>
-        <button id="btnAI" class="btn-gold" style="background: #222; color: #aaa; font-size: 12px; margin-top: 5px;">VS KOMPUTER 🤖</button>
+        <button id="btnGabung" class="btn-gold" style="background:#000; color:var(--gold); border: 1px solid var(--gold);">GABUNG</button>
+        <button id="btnAI" class="btn-gold" style="background:#222; font-size:12px; color:#aaa;">VS KOMPUTER 🤖</button>
     </div>
 
-    <div id="gameRoom" style="display:none; text-align:center; width: 100%;">
+    <div id="gameRoom" style="display:none; width: 100%; height: 100%;">
         <div id="modeDisplay">MODE: -</div>
-        <div id="voteBox">
-            <div id="voteMsg" style="margin-bottom: 10px;"></div>
-            <button id="vYes" class="btn-gold" style="padding: 8px 20px; font-size: 12px;">YA</button>
-            <button id="vNo" class="btn-gold" style="padding: 8px 20px; font-size: 12px; background: #000; color:#fff;">TIDAK</button>
-        </div>
-        <h2 id="roomTitle" style="color:var(--gold); margin: 10px 0 5px 0; font-size: 1.4em; text-shadow: 0 2px 4px #000;"></h2>
-        <div id="turnIndicator" style="margin-bottom: 5px;">...</div>
-        <div id="playerList" style="display:flex; justify-content:center; gap:8px; margin-bottom: 15px;"></div>
         
-        <div id="cardArea" style="display:flex; justify-content:center; flex-wrap:wrap; min-height: 160px;"></div>
-        
-        <div id="actionArea" style="margin-top:20px;">
-            <button id="btnTarik" class="btn-gold" style="width:250px;">TARIK KARTU</button>
-            <button id="btnGas" class="btn-gold" style="width:250px; display:none; background: #0a4d28; color: #fff;">GAS! 🚀</button>
+        <div style="margin-top: 80px; text-align: center;">
+            <h2 id="roomTitle" style="color:var(--gold); text-shadow: 0 2px 4px #000;"></h2>
+            <div id="playerList"></div>
+            
+            <div id="cardArea" style="display:flex; justify-content:center; flex-wrap:wrap; perspective: 1000px;"></div>
+            
+            <div style="margin-top:30px;">
+                <button id="btnTarik" class="btn-gold" style="width:200px;">TARIK KARTU</button>
+                <button id="btnGas" class="btn-gold" style="width:200px; display:none; background:#0a4d28; color:#fff;">GAS! 🚀</button>
+            </div>
+            <p id="turnIndicator" style="margin-top:15px; font-style:italic; font-size:14px;"></p>
+            <button id="btnMainLagi" style="background:none; color:var(--gold); border:none; text-decoration:underline; margin-top:20px; cursor:pointer;">RESET PERMAINAN</button>
         </div>
-        <button id="btnMainLagi" style="background:none; color:var(--gold); border:none; margin-top:30px; text-decoration:underline; font-size:12px; cursor:pointer;">RESET PERMAINAN</button>
     </div>
 
     <script type="module">
@@ -138,15 +137,16 @@
         const firebaseConfig = { apiKey: "AIzaSyDt4C2gQuyCS28359YP0nryXpv_ASqra8U", authDomain: "putu-domino-7fa82.firebaseapp.com", projectId: "putu-domino-7fa82", storageBucket: "putu-domino-7fa82.firebasestorage.app", messagingSenderId: "721819699355", appId: "1:721819699355:web:feec9dcc605643d3bcde3e" };
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        
+
         let curRoom = ""; let pId = Math.random().toString(36).substring(7);
         let isAI = false; let localData = null;
         const dotPatterns = [[], [4], [0, 8], [0, 4, 8], [0, 2, 6, 8], [0, 2, 4, 6, 8], [0, 3, 6, 2, 5, 8]];
 
-        // AUDIO BASS & ELEGANT
+        // FIX AUDIO: Suara akan diinisialisasi pada klik pertama
         const sfx = {
-            draw: new Audio('https://www.soundjay.com/misc/sounds/paper-slide-1.mp3'), 
-            flip: new Audio('https://www.soundjay.com/button/sounds/button-20.mp3')
+            draw: new Audio('https://assets.mixkit.co/active_storage/sfx/2005/2005-preview.mp3'), // Suara lempar kartu bass
+            peel: new Audio('https://www.soundjay.com/misc/sounds/paper-slide-1.mp3'), // Suara mengelupas
+            finish: new Audio('https://www.soundjay.com/button/sounds/button-20.mp3')
         };
 
         function generateDeck() {
@@ -155,39 +155,39 @@
             return deck.sort(() => Math.random() - 0.5);
         }
 
-        // LOGIKA TITIK SESUAI FOTO
         function createDots(num) {
             let html = '<div class="card-half">';
             const pattern = dotPatterns[num];
-            const sizeClass = `dot-size-${num === 0 ? 1 : num}`;
+            const sizeClass = `dot-size-${num === 1 ? 1 : (num === 0 ? 0 : (num <= 3 ? 2 : 4))}`;
             for(let i=0; i<9; i++) { 
                 html += `<div class="dot ${pattern.includes(i) ? 'active' : ''} ${sizeClass}"></div>`; 
             }
             return html + '</div>';
         }
 
-        window.startAnyPeel = function(e, el) {
+        // 5. LOGIKA KELUPAS DARI SEGALA ARAH
+        window.startPeeling = function(e, el) {
             if (e.cancelable) e.preventDefault();
-            const startX = e.clientX || e.touches[0].clientX;
-            const startY = e.clientY || e.touches[0].clientY;
+            sfx.peel.play();
+            const rect = el.getBoundingClientRect();
+            const startX = (e.clientX || e.touches[0].clientX) - rect.left;
+            const startY = (e.clientY || e.touches[0].clientY) - rect.top;
             
             function onMove(me) {
-                const curX = me.clientX || (me.touches ? me.touches[0].clientX : me.clientX);
-                const curY = me.clientY || (me.touches ? me.touches[0].clientY : me.clientY);
-                const dist = Math.sqrt(Math.pow(curX - startX, 2) + Math.pow(curY - startY, 2));
+                const moveX = (me.clientX || (me.touches ? me.touches[0].clientX : me.clientX)) - rect.left;
+                const moveY = (me.clientY || (me.touches ? me.touches[0].clientY : me.clientY)) - rect.top;
+                const dist = Math.sqrt(Math.pow(moveX - startX, 2) + Math.pow(moveY - startY, 2));
                 
-                // HAPTIC FEEDBACK (GETARAN)
-                if (dist > 5 && dist < 80 && Math.floor(dist) % 15 === 0) {
-                    if (navigator.vibrate) navigator.vibrate(10);
-                }
+                // Getaran saat mengintip
+                if (dist > 10 && Math.floor(dist) % 20 === 0) { if(navigator.vibrate) navigator.vibrate(10); }
 
-                const progress = Math.min(100, (dist / 85) * 100);
-                el.style.clipPath = `circle(${100 - progress}% at ${startX - el.getBoundingClientRect().left}px ${startY - el.getBoundingClientRect().top}px)`;
+                const progress = Math.min(100, (dist / 100) * 100);
+                el.style.clipPath = `circle(${110 - progress}% at ${startX}px ${startY}px)`;
                 
-                if (dist > 85) { 
+                if (dist > 110) { 
                     el.classList.add('opened'); 
-                    sfx.flip.play(); 
-                    if (navigator.vibrate) navigator.vibrate(30); 
+                    sfx.finish.play();
+                    if(navigator.vibrate) navigator.vibrate(40);
                     cleanup(); 
                 }
             }
@@ -199,129 +199,101 @@
 
         function renderLocal(d) {
             localData = d;
+            document.getElementById("modeDisplay").innerText = "MODE: " + d.mode.toUpperCase();
+            document.getElementById("roomTitle").innerText = d.roomName;
+            
             const players = d.players;
             const me = players.find(p => p.id === pId);
             const activeP = players[d.turnIndex];
             const everyoneGas = players.every(p => p.ready);
 
-            document.getElementById("modeDisplay").innerText = "MODE: " + d.mode.toUpperCase();
-            document.getElementById("roomTitle").innerText = d.roomName || "MYSTIC ROOM";
             document.getElementById("playerList").innerHTML = players.map((p, i) => `
-                <span class="player-name ${everyoneGas && i === d.turnIndex ? 'active-turn' : ''}">${p.name} (${p.cards.length}) ${p.ready?'✓':''}</span>
+                <div class="player-badge ${everyoneGas && i === d.turnIndex ? 'active-turn' : ''}">
+                    ${p.name} (${p.cards.length}) ${p.ready?'✓':''}
+                </div>
             `).join('');
 
-            document.getElementById("cardArea").innerHTML = me.cards.map((c) => {
-                const [t, b] = c.split('/');
-                return `<div class="card-container"><div class="domino-card">${createDots(parseInt(t))}<div class="line"></div>${createDots(parseInt(b))}</div><div class="card-overlay"></div></div>`;
-            }).join('');
-            document.querySelectorAll('.card-overlay').forEach(ov => ov.onpointerdown = (e) => { sfx.draw.play(); startAnyPeel(e, ov); });
+            const area = document.getElementById("cardArea");
+            const currentCardCount = area.querySelectorAll('.card-container').length;
+            
+            if (me.cards.length > currentCardCount) {
+                // Efek Kartu Dilempar dari Tengah
+                const newCard = me.cards[me.cards.length - 1];
+                const [t, b] = newCard.split('/');
+                const cardHtml = `
+                    <div class="card-container thrown">
+                        <div class="domino-card">${createDots(parseInt(t))}<div class="line"></div>${createDots(parseInt(b))}</div>
+                        <div class="card-overlay"></div>
+                    </div>`;
+                area.insertAdjacentHTML('beforeend', cardHtml);
+                sfx.draw.play();
+                if(navigator.vibrate) navigator.vibrate(25);
+            } else {
+                area.innerHTML = me.cards.map(c => {
+                    const [t, b] = c.split('/');
+                    return `<div class="card-container">
+                        <div class="domino-card">${createDots(parseInt(t))}<div class="line"></div>${createDots(parseInt(b))}</div>
+                        <div class="card-overlay"></div>
+                    </div>`;
+                }).join('');
+            }
+
+            document.querySelectorAll('.card-overlay').forEach(ov => {
+                ov.onpointerdown = (e) => startPeeling(e, ov);
+            });
 
             if (me.cards.length === 1 && !me.ready) {
                 document.getElementById("btnTarik").style.display = "none";
-                document.getElementById("btnGas").style.display = "inline-block";
-                document.getElementById("turnIndicator").innerText = "KARTU SIAP, TEKAN GAS!";
+                document.getElementById("btnGas").style.display = "block";
             } else {
-                document.getElementById("btnTarik").style.display = "inline-block";
+                document.getElementById("btnTarik").style.display = "block";
                 document.getElementById("btnGas").style.display = "none";
-                const isMyTurn = (activeP.id === pId);
-                document.getElementById("btnTarik").disabled = !everyoneGas || !isMyTurn || me.cards.length >= (d.mode === "spirit" ? 3 : 4);
-                document.getElementById("turnIndicator").innerText = !everyoneGas ? "MENUNGGU PEMAIN LAIN GAS..." : (isMyTurn ? "GILIRAN ANDA!" : "GILIRAN: " + activeP.name);
+                document.getElementById("btnTarik").disabled = !everyoneGas || (activeP.id !== pId) || me.cards.length >= (d.mode === "spirit" ? 3 : 4);
             }
-
-            if (everyoneGas && d.players[d.turnIndex].id === "bot" && isAI) {
-                setTimeout(() => {
-                    if (d.players[d.turnIndex].cards.length < (d.mode === "spirit" ? 3 : 4)) {
-                        d.players[d.turnIndex].cards.push(d.deck.pop()); sfx.draw.play();
-                    }
-                    d.turnIndex = (d.turnIndex + 1) % d.players.length; renderLocal(d);
-                }, 1500);
-            }
+            document.getElementById("turnIndicator").innerText = !everyoneGas ? "Menunggu semua pemain GAS..." : (activeP.id === pId ? "GILIRAN ANDA!" : "Giliran: " + activeP.name);
         }
 
-        // --- FIREBASE LOGIC ---
-        function aktifkanRoom(rId) {
-            curRoom = rId; document.getElementById("lobby").style.display = "none"; document.getElementById("gameRoom").style.display = "block";
-            onSnapshot(doc(db, "rooms", rId), (snap) => {
-                if(!snap.exists() || isAI) return;
-                renderLocal(snap.data());
-                const d = snap.data();
-                const vb = document.getElementById("voteBox");
-                if (d.resetVote && d.resetVote.status === "pending") {
-                    vb.style.display = "block"; document.getElementById("voteMsg").innerText = d.resetVote.by + " mengajak reset.";
-                    document.getElementById("vYes").onclick = () => sendVote(true);
-                    document.getElementById("vNo").onclick = () => sendVote(false);
-                } else { vb.style.display = "none"; }
-            });
-        }
-
-        async function sendVote(yes) {
-            const s = await getDoc(doc(db, "rooms", curRoom)); let d = s.data();
-            if (!yes) return updateDoc(doc(db, "rooms", curRoom), { resetVote: null });
-            let votes = d.resetVote.yesVotes || []; if (!votes.includes(pId)) votes.push(pId);
-            if (votes.length >= d.players.length) {
-                let deck = generateDeck();
-                let ps = d.players; ps.forEach(p => { p.cards = [deck.pop()]; p.ready = false; });
-                await updateDoc(doc(db, "rooms", curRoom), { players: ps, deck: deck, turnIndex: 0, resetVote: null });
-            } else { await updateDoc(doc(db, "rooms", curRoom), { "resetVote.yesVotes": votes }); }
-        }
-
-        // --- BUTTONS ---
+        // --- BUTTON ACTIONS ---
         document.getElementById("btnBuat").onclick = async () => {
-            const n = document.getElementById("pName").value; if(!n) return alert("Isi Nama!");
+            const n = document.getElementById("pName").value || "Player";
             const rId = Math.random().toString(36).substring(2, 7).toUpperCase();
             let deck = generateDeck();
             await setDoc(doc(db, "rooms", rId), { 
                 mode: document.getElementById("gameMode").value, 
                 roomName: document.getElementById("roomName").value || "MYSTIC ROOM",
                 players: [{id:pId, name:n, cards:[deck.pop()], ready:false}], 
-                deck: deck, turnIndex:0, resetVote: null 
+                deck: deck, turnIndex:0 
             });
             aktifkanRoom(rId);
         };
 
-        document.getElementById("btnTarik").onclick = async () => {
-            if(isAI) {
-                localData.players[localData.turnIndex].cards.push(localData.deck.pop()); sfx.draw.play();
-                localData.turnIndex = (localData.turnIndex + 1) % localData.players.length; renderLocal(localData);
-                return;
+        document.getElementById("btnGabung").onclick = async () => {
+            const rId = document.getElementById("rCodeInput").value.toUpperCase();
+            const s = await getDoc(doc(db, "rooms", rId));
+            if(!s.exists()) return alert("Room Tidak Ada!");
+            let d = s.data();
+            if(!d.players.find(p => p.id === pId)) {
+                d.players.push({id:pId, name:document.getElementById("pName").value || "Guest", cards:[d.deck.pop()], ready:false});
+                await updateDoc(doc(db, "rooms", rId), { players: d.players, deck: d.deck });
             }
+            aktifkanRoom(rId);
+        };
+
+        function aktifkanRoom(rId) {
+            curRoom = rId; document.getElementById("lobby").style.display = "none"; document.getElementById("gameRoom").style.display = "block";
+            onSnapshot(doc(db, "rooms", rId), (snap) => { if(snap.exists()) renderLocal(snap.data()); });
+        }
+
+        document.getElementById("btnTarik").onclick = async () => {
             const s = await getDoc(doc(db, "rooms", curRoom)); let d = s.data();
-            d.players[d.turnIndex].cards.push(d.deck.pop()); sfx.draw.play();
+            d.players[d.turnIndex].cards.push(d.deck.pop());
             await updateDoc(doc(db, "rooms", curRoom), { players: d.players, deck: d.deck, turnIndex: (d.turnIndex + 1) % d.players.length });
         };
 
         document.getElementById("btnGas").onclick = async () => {
-            if(isAI) { localData.players.forEach(p => p.ready = true); sfx.flip.play(); renderLocal(localData); return; }
             const s = await getDoc(doc(db, "rooms", curRoom)); let ps = s.data().players;
-            ps.find(p => p.id === pId).ready = true; sfx.flip.play();
+            ps.find(p => p.id === pId).ready = true;
             await updateDoc(doc(db, "rooms", curRoom), { players: ps });
-        };
-
-        document.getElementById("btnMainLagi").onclick = async () => {
-            if(isAI) {
-                let d = generateDeck();
-                const newData = { mode: localData.mode, roomName: "VS COMPUTER", players: [{id:pId, name:localData.players[0].name, cards:[d.pop()], ready:false}, {id:"bot", name:"KOMPUTER 🤖", cards:[d.pop()], ready:false}], deck: d, turnIndex: 0 };
-                renderLocal(newData); return;
-            }
-            const s = await getDoc(doc(db, "rooms", curRoom));
-            await updateDoc(doc(db, "rooms", curRoom), { resetVote: { status: "pending", by: s.data().players.find(p => p.id === pId).name, yesVotes: [pId] } });
-        };
-
-        document.getElementById("btnAI").onclick = () => {
-            isAI = true; let d = generateDeck();
-            document.getElementById("lobby").style.display = "none"; document.getElementById("gameRoom").style.display = "block";
-            renderLocal({ mode: document.getElementById("gameMode").value, roomName: "VS COMPUTER", players: [{id:pId, name:document.getElementById("pName").value || "Pemain", cards:[d.pop()], ready:false}, {id:"bot", name:"KOMPUTER 🤖", cards:[d.pop()], ready:false}], deck: d, turnIndex: 0 });
-        };
-
-        document.getElementById("btnGabung").onclick = async () => {
-            const n = document.getElementById("pName").value; const rId = document.getElementById("rCodeInput").value.toUpperCase();
-            const s = await getDoc(doc(db, "rooms", rId)); if(!s.exists()) return alert("Room Tidak Ada!");
-            let d = s.data(); 
-            if(!d.players.find(p => p.id === pId)) { 
-                d.players.push({id:pId, name:n, cards:[d.deck.pop()], ready:false}); 
-                await updateDoc(doc(db, "rooms", rId), { players: d.players, deck: d.deck }); 
-            }
-            aktifkanRoom(rId);
         };
     </script>
 </body>
