@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Domino Mystic Classic</title>
+    <title>Domino Mystic Classic Pro</title>
     <style>
         body { background: radial-gradient(circle, #0a4d28 0%, #052915 100%); color: white; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
         .box { background: rgba(0,0,0,0.9); padding: 30px; border-radius: 20px; border: 2px solid #ffd700; margin-top: 30px; text-align: center; width: 320px; display: flex; flex-direction: column; gap: 15px; }
@@ -13,24 +13,29 @@
         /* DESAIN KARTU KUNING KLASIK */
         .domino-card { 
             background: #ffcc00; border: 2px solid #000; border-radius: 10px; 
-            width: 70px; height: 120px; margin: 8px; display: flex; 
+            width: 75px; height: 130px; margin: 8px; display: flex; 
             flex-direction: column; justify-content: space-around; align-items: center; 
             box-shadow: 0 5px 15px rgba(0,0,0,0.5); cursor: pointer; position: relative;
+            transition: transform 0.2s;
         }
         .card-half { 
             display: grid; grid-template-columns: repeat(3, 1fr); 
-            grid-template-rows: repeat(3, 1fr); width: 45px; height: 45px; gap: 2px;
+            grid-template-rows: repeat(3, 1fr); width: 50px; height: 50px; gap: 3px;
         }
-        .dot { background: #cc0000; border-radius: 50%; width: 10px; height: 10px; visibility: hidden; }
+        .dot { background: #cc0000; border-radius: 50%; width: 12px; height: 12px; visibility: hidden; }
         .dot.active { visibility: visible; }
-        .line { width: 90%; height: 2px; background: #000; margin: 2px 0; }
+        .line { width: 90%; height: 3px; background: #000; margin: 2px 0; border-radius: 2px; }
         
         /* KARTU TERTUTUP (MYSTIC) */
         .domino-card.closed { background: #1a1a1a; border-color: #ffd700; }
-        .domino-card.closed .card-half, .domino-card.closed .line { display: none; }
-        .domino-card.closed::after { content: "?"; font-size: 50px; color: #cc0000; font-weight: bold; }
+        .domino-card.closed .card-half, .domino-card.closed .line { visibility: hidden; }
+        .domino-card.closed::after { 
+            content: "?"; position: absolute; font-size: 60px; 
+            color: #cc0000; font-weight: bold; top: 50%; left: 50%; 
+            transform: translate(-50%, -50%); visibility: visible;
+        }
 
-        #player-label { font-size: 1.2em; color: #ffd700; margin: 15px 0; font-weight: bold; text-shadow: 1px 1px 3px #000; }
+        #player-label { font-size: 1.2em; color: #ffd700; margin: 15px 0; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -53,7 +58,8 @@
         <div id="cardArea" style="display:flex; justify-content:center; flex-wrap:wrap;"></div>
         <button id="btnTarik" class="btn-gold" style="width:250px; margin-top: 20px;">TARIK KARTU</button>
         <br>
-        <button onclick="location.reload()" style="background:none; color:white; border:none; text-decoration:underline; cursor:pointer; margin-top:15px;">Keluar Room</button>
+        <button id="btnMainLagi" class="btn-red" style="background: white; color: black; padding: 10px 20px; border-radius: 8px; font-weight: bold; border: none; margin-top: 20px; cursor: pointer;">MAIN LAGI (RESET)</button>
+        <p style="font-size: 12px; color: #aaa; margin-top: 10px;">Sentuh kartu untuk buka/tutup</p>
     </div>
 
     <script type="module">
@@ -125,6 +131,13 @@
                     await updateDoc(doc(db, "rooms", rId), { players: ps });
                 } else { alert("Maksimal " + max + " kartu!"); }
             };
+
+            document.getElementById("btnMainLagi").onclick = async () => {
+                const s = await getDoc(doc(db, "rooms", rId));
+                let ps = s.data().players;
+                ps.forEach(p => p.cards = []);
+                await updateDoc(doc(db, "rooms", rId), { players: ps });
+            };
         }
 
         document.getElementById("btnBuat").onclick = async () => {
@@ -138,6 +151,7 @@
         document.getElementById("btnGabung").onclick = async () => {
             const n = document.getElementById("pName").value;
             const rId = document.getElementById("rCodeInput").value.toUpperCase();
+            if(!n || !rId) return alert("Data tidak lengkap!");
             const s = await getDoc(doc(db, "rooms", rId));
             if(!s.exists()) return alert("Room tidak ada!");
             let ps = s.data().players;
