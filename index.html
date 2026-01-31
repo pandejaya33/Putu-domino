@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Domino Mystic Final Pro</title>
+    <title>Domino Mystic Final Pro - Unique Deck</title>
     <style>
         body { background: radial-gradient(circle, #0a4d28 0%, #052915 100%); color: white; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
         .box { background: rgba(0,0,0,0.9); padding: 30px; border-radius: 20px; border: 2px solid #ffd700; margin-top: 30px; text-align: center; width: 320px; display: flex; flex-direction: column; gap: 15px; }
@@ -43,22 +43,14 @@
 
     <div id="gameRoom" style="display:none; text-align:center; width: 100%; padding-top: 20px;">
         <h2 id="displayKode" style="color:#ffd700;"></h2>
-        
-        <div style="width: 320px; margin: 0 auto;">
-            <p style="margin-bottom: 5px; font-size: 12px; color: #ffd700;">PEMAIN DI ROOM:</p>
-            <div id="playerList"></div>
-        </div>
-
+        <div style="width: 320px; margin: 0 auto;"><p style="margin-bottom: 5px; font-size: 12px; color: #ffd700;">PEMAIN DI ROOM:</p><div id="playerList"></div></div>
         <div id="player-label"></div>
         <div id="cardArea" style="display:flex; justify-content:center; flex-wrap:wrap;"></div>
-        
         <div id="actionArea" style="margin-top: 20px;">
             <button id="btnTarik" class="btn-gold" style="width:250px;">TARIK KARTU</button>
             <button id="btnGas" class="btn-gold" style="width:250px; display:none; background: linear-gradient(#00ff00, #008000); color: white;">GAS! 🚀</button>
         </div>
-
         <button id="btnMainLagi" style="background: white; color: black; padding: 10px 20px; border-radius: 8px; font-weight: bold; border: none; margin-top: 20px; cursor: pointer;">MAIN LAGI (RESET)</button>
-        <p style="font-size: 12px; color: #aaa; margin-top: 10px;">Sentuh kartu untuk buka/tutup</p>
     </div>
 
     <script type="module">
@@ -79,6 +71,17 @@
         const pId = Math.random().toString(36).substring(7);
         const dotPatterns = [[], [4], [0, 8], [0, 4, 8], [0, 2, 6, 8], [0, 2, 4, 6, 8], [0, 3, 6, 2, 5, 8]];
 
+        // Fungsi membuat deck 28 kartu unik
+        function generateDeck() {
+            let deck = [];
+            for (let i = 0; i <= 6; i++) {
+                for (let j = i; j <= 6; j++) {
+                    deck.push(`${i}/${j}`);
+                }
+            }
+            return deck.sort(() => Math.random() - 0.5); // Acak tumpukan
+        }
+
         function createDots(num) {
             let html = '<div class="card-half">';
             const pattern = dotPatterns[num];
@@ -96,11 +99,8 @@
                 const data = snap.data();
                 const players = data.players;
                 const me = players.find(p => p.id === pId);
-                
-                // Cek apakah semua sudah tekan GAS
                 const everyoneReady = players.every(p => p.ready === true);
                 
-                // Update UI Daftar Pemain
                 document.getElementById("playerList").innerHTML = players.map(p => `
                     <span class="player-name">${p.name} (${p.cards.length} KRT) ${p.ready ? '<b class="ready-dot">✓</b>' : ''}</span>
                 `).join('');
@@ -112,7 +112,6 @@
                         return `<div class="domino-card closed" onclick="this.classList.toggle('closed')">${createDots(parseInt(top))}<div class="line"></div>${createDots(parseInt(bot))}</div>`;
                     }).join('');
 
-                    // LOGIKA TOMBOL GAS VS TARIK
                     if (me.cards.length === 1 && !me.ready) {
                         document.getElementById("btnTarik").style.display = "none";
                         document.getElementById("btnGas").style.display = "inline-block";
@@ -140,11 +139,20 @@
 
             document.getElementById("btnTarik").onclick = async () => {
                 const s = await getDoc(doc(db, "rooms", rId));
-                let d = s.data(); let ps = d.players; let mIdx = ps.findIndex(p => p.id === pId);
+                let d = s.data(); 
+                let ps = d.players; 
+                let deck = d.deck; // Ambil sisa deck dari database
+                let mIdx = ps.findIndex(p => p.id === pId);
                 let max = d.mode === "spirit" ? 3 : 4;
+
                 if(ps[mIdx].cards.length < max) {
-                    ps[mIdx].cards.push(Math.floor(Math.random()*7)+"/"+Math.floor(Math.random()*7));
-                    await updateDoc(doc(db, "rooms", rId), { players: ps });
+                    if (deck.length > 0) {
+                        const drawnCard = deck.pop(); // Ambil kartu paling atas
+                        ps[mIdx].cards.push(drawnCard);
+                        await updateDoc(doc(db, "rooms", rId), { players: ps, deck: deck });
+                    } else {
+                        alert("Kartu di tumpukan habis!");
+                    }
                 } else { alert("Maksimal " + max + " kartu!"); }
             };
 
@@ -152,7 +160,8 @@
                 const s = await getDoc(doc(db, "rooms", rId));
                 let ps = s.data().players;
                 ps.forEach(p => { p.cards = []; p.ready = false; });
-                await updateDoc(doc(db, "rooms", rId), { players: ps });
+                // Reset deck menjadi 28 kartu baru
+                await updateDoc(doc(db, "rooms", rId), { players: ps, deck: generateDeck() });
             };
         }
 
@@ -160,7 +169,11 @@
             const n = document.getElementById("pName").value;
             if(!n) return alert("Nama!");
             const rId = Math.random().toString(36).substring(2, 7).toUpperCase();
-            await setDoc(doc(db, "rooms", rId), { mode: document.getElementById("gameMode").value, players: [{ id: pId, name: n, cards: [], ready: false }] });
+            await setDoc(doc(db, "rooms", rId), { 
+                mode: document.getElementById("gameMode").value, 
+                players: [{ id: pId, name: n, cards: [], ready: false }],
+                deck: generateDeck() // Buat deck saat room dibuat
+            });
             aktifkanRoom(rId);
         };
 
