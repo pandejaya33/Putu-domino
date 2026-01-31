@@ -3,54 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Domino Mystic Final Pro</title>
+    <title>Domino Mystic Classic</title>
     <style>
         body { background: radial-gradient(circle, #0a4d28 0%, #052915 100%); color: white; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
-        .box { background: rgba(0,0,0,0.9); padding: 30px; border-radius: 20px; border: 2px solid #ffd700; margin-top: 50px; text-align: center; width: 320px; display: flex; flex-direction: column; gap: 15px; box-shadow: 0 0 20px rgba(255, 215, 0, 0.2); }
+        .box { background: rgba(0,0,0,0.9); padding: 30px; border-radius: 20px; border: 2px solid #ffd700; margin-top: 30px; text-align: center; width: 320px; display: flex; flex-direction: column; gap: 15px; }
         input, select { padding: 12px; border-radius: 8px; border: none; text-align: center; font-weight: bold; }
-        .btn-gold { background: linear-gradient(#ffd700, #b8860b); color: #000; padding: 15px; border-radius: 12px; font-weight: bold; border: none; cursor: pointer; transition: 0.3s; }
-        .btn-gold:active { transform: scale(0.95); }
-        .btn-red { background: linear-gradient(#ff4d4d, #b30000); color: white; padding: 10px; border-radius: 8px; font-weight: bold; border: none; cursor: pointer; margin-top: 20px; }
+        .btn-gold { background: linear-gradient(#ffd700, #b8860b); color: #000; padding: 15px; border-radius: 12px; font-weight: bold; border: none; cursor: pointer; }
+        
+        /* DESAIN KARTU KUNING KLASIK */
         .domino-card { 
-            background: #1a1a1a; border: 2px solid #ffd700; border-radius: 10px; 
-            width: 70px; height: 110px; margin: 8px; display: flex; 
-            justify-content: center; align-items: center; font-size: 30px; 
-            color: #ff0000; font-weight: bold; cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5); user-select: none;
+            background: #ffcc00; border: 2px solid #000; border-radius: 10px; 
+            width: 70px; height: 120px; margin: 8px; display: flex; 
+            flex-direction: column; justify-content: space-around; align-items: center; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); cursor: pointer; position: relative;
         }
-        #player-label { font-size: 1.2em; color: #ffd700; margin-bottom: 10px; font-weight: bold; }
+        .card-half { 
+            display: grid; grid-template-columns: repeat(3, 1fr); 
+            grid-template-rows: repeat(3, 1fr); width: 45px; height: 45px; gap: 2px;
+        }
+        .dot { background: #cc0000; border-radius: 50%; width: 10px; height: 10px; visibility: hidden; }
+        .dot.active { visibility: visible; }
+        .line { width: 90%; height: 2px; background: #000; margin: 2px 0; }
+        
+        /* KARTU TERTUTUP (MYSTIC) */
+        .domino-card.closed { background: #1a1a1a; border-color: #ffd700; }
+        .domino-card.closed .card-half, .domino-card.closed .line { display: none; }
+        .domino-card.closed::after { content: "?"; font-size: 50px; color: #cc0000; font-weight: bold; }
+
+        #player-label { font-size: 1.2em; color: #ffd700; margin: 15px 0; font-weight: bold; text-shadow: 1px 1px 3px #000; }
     </style>
 </head>
 <body>
 
     <div id="lobby" class="box">
         <h1 style="color:#ffd700; margin:0;">DOMINO MYSTIC</h1>
-        <p style="font-size: 11px; color: #aaa;">Klik kartu untuk mengintip angka</p>
         <input type="text" id="pName" placeholder="Nama Kamu">
-        <input type="text" id="rCodeInput" placeholder="Kode Room (Jika Gabung)">
+        <input type="text" id="rCodeInput" placeholder="Kode Room">
         <select id="gameMode">
             <option value="spirit">Mode Spirit (Max 3)</option>
             <option value="bererong">Mode Bererong (Max 4)</option>
         </select>
         <button id="btnBuat" class="btn-gold">BUAT ROOM</button>
-        <button id="btnGabung" class="btn-gold" style="background: #444; color: white;">GABUNG ROOM</button>
+        <button id="btnGabung" class="btn-gold" style="background: #444; color: white;">GABUNG</button>
     </div>
 
-    <div id="gameRoom" style="display:none; text-align:center; width: 100%; padding-top: 30px;">
+    <div id="gameRoom" style="display:none; text-align:center; width: 100%; padding-top: 20px;">
         <h2 id="displayKode" style="color:#ffd700;"></h2>
         <div id="player-label"></div>
-        <div id="cardArea" style="display:flex; justify-content:center; flex-wrap:wrap; min-height: 120px;"></div>
+        <div id="cardArea" style="display:flex; justify-content:center; flex-wrap:wrap;"></div>
         <button id="btnTarik" class="btn-gold" style="width:250px; margin-top: 20px;">TARIK KARTU</button>
         <br>
-        <button id="btnMainLagi" class="btn-red">MAIN LAGI (RESET)</button>
-        <p style="font-size: 12px; margin-top: 10px; color: #888;">Sentuh kartu untuk buka/tutup</p>
+        <button onclick="location.reload()" style="background:none; color:white; border:none; text-decoration:underline; cursor:pointer; margin-top:15px;">Keluar Room</button>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // CONFIG FIREBASE ASLI MILIKMU
         const firebaseConfig = {
             apiKey: "AIzaSyDt4C2gQuyCS28359YP0nryXpv_ASqra8U",
             authDomain: "putu-domino-7fa82.firebaseapp.com",
@@ -64,6 +73,26 @@
         const db = getFirestore(app);
         const pId = Math.random().toString(36).substring(7);
 
+        // Pola titik domino (0-6)
+        const dotPatterns = [
+            [], // 0
+            [4], // 1
+            [0, 8], // 2
+            [0, 4, 8], // 3
+            [0, 2, 6, 8], // 4
+            [0, 2, 4, 6, 8], // 5
+            [0, 3, 6, 2, 5, 8] // 6
+        ];
+
+        function createDots(num) {
+            let html = '<div class="card-half">';
+            const pattern = dotPatterns[num];
+            for(let i=0; i<9; i++) {
+                html += `<div class="dot ${pattern.includes(i) ? 'active' : ''}"></div>`;
+            }
+            return html + '</div>';
+        }
+
         function aktifkanRoom(rId) {
             document.getElementById("lobby").style.display = "none";
             document.getElementById("gameRoom").style.display = "block";
@@ -74,61 +103,45 @@
                 const data = snap.data();
                 const me = data.players.find(p => p.id === pId);
                 if(me) {
-                    document.getElementById("player-label").innerText = "PEMAIN: " + me.name;
-                    // Fitur Intip: Klik ganti teks antara ? dan angka asli
-                    document.getElementById("cardArea").innerHTML = me.cards.map((val) => `
-                        <div class="domino-card" onclick="this.innerText = this.innerText === '?' ? '${val}' : '?'">?</div>
-                    `).join('');
+                    document.getElementById("player-label").innerText = me.name + " (" + me.cards.length + " KRT)";
+                    document.getElementById("cardArea").innerHTML = me.cards.map((c) => {
+                        const [top, bot] = c.split('/');
+                        return `
+                        <div class="domino-card closed" onclick="this.classList.toggle('closed')">
+                            ${createDots(parseInt(top))}
+                            <div class="line"></div>
+                            ${createDots(parseInt(bot))}
+                        </div>`;
+                    }).join('');
                 }
             });
 
             document.getElementById("btnTarik").onclick = async () => {
                 const s = await getDoc(doc(db, "rooms", rId));
-                let d = s.data();
-                let ps = d.players;
-                let mIdx = ps.findIndex(p => p.id === pId);
+                let d = s.data(); let ps = d.players; let mIdx = ps.findIndex(p => p.id === pId);
                 let max = d.mode === "spirit" ? 3 : 4;
-
                 if(ps[mIdx].cards.length < max) {
-                    // Generate angka domino acak
-                    const val = Math.floor(Math.random() * 7) + "/" + Math.floor(Math.random() * 7);
-                    ps[mIdx].cards.push(val);
+                    ps[mIdx].cards.push(Math.floor(Math.random()*7)+"/"+Math.floor(Math.random()*7));
                     await updateDoc(doc(db, "rooms", rId), { players: ps });
-                } else {
-                    alert("Maksimal " + max + " kartu untuk mode " + d.mode);
-                }
-            };
-
-            document.getElementById("btnMainLagi").onclick = async () => {
-                const s = await getDoc(doc(db, "rooms", rId));
-                let ps = s.data().players;
-                ps.forEach(p => p.cards = []);
-                await updateDoc(doc(db, "rooms", rId), { players: ps });
+                } else { alert("Maksimal " + max + " kartu!"); }
             };
         }
 
         document.getElementById("btnBuat").onclick = async () => {
             const n = document.getElementById("pName").value;
-            if(!n) return alert("Isi nama!");
-            const rId = Math.random().toString(36).substring(2, 6).toUpperCase();
-            await setDoc(doc(db, "rooms", rId), { 
-                mode: document.getElementById("gameMode").value, 
-                players: [{ id: pId, name: n, cards: [] }] 
-            });
+            if(!n) return alert("Nama!");
+            const rId = Math.random().toString(36).substring(2, 7).toUpperCase();
+            await setDoc(doc(db, "rooms", rId), { mode: document.getElementById("gameMode").value, players: [{ id: pId, name: n, cards: [] }] });
             aktifkanRoom(rId);
         };
 
         document.getElementById("btnGabung").onclick = async () => {
             const n = document.getElementById("pName").value;
             const rId = document.getElementById("rCodeInput").value.toUpperCase();
-            if(!n || !rId) return alert("Isi Nama & Kode Room!");
             const s = await getDoc(doc(db, "rooms", rId));
-            if(!s.exists()) return alert("Room tidak ditemukan!");
+            if(!s.exists()) return alert("Room tidak ada!");
             let ps = s.data().players;
-            if(!ps.find(p => p.id === pId)) {
-                ps.push({ id: pId, name: n, cards: [] });
-                await updateDoc(doc(db, "rooms", rId), { players: ps });
-            }
+            if(!ps.find(p => p.id === pId)) { ps.push({ id: pId, name: n, cards: [] }); await updateDoc(doc(db, "rooms", rId), { players: ps }); }
             aktifkanRoom(rId);
         };
     </script>
