@@ -3,84 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Domino Mystic Final Version</title>
+    <title>Domino Mystic Pro</title>
     <style>
-        body { 
-            background: radial-gradient(circle, #0a4d28 0%, #052915 100%); 
-            color: white; font-family: sans-serif; margin: 0; 
-            display: flex; flex-direction: column; align-items: center; min-height: 100vh;
-        }
-        .box { 
-            background: rgba(0,0,0,0.9); padding: 30px; border-radius: 20px; 
-            border: 2px solid #ffd700; margin-top: 50px; text-align: center; 
-            display: flex; flex-direction: column; gap: 15px; width: 320px;
-            box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
-        }
+        body { background: radial-gradient(circle, #0a4d28 0%, #052915 100%); color: white; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        .box { background: rgba(0,0,0,0.9); padding: 30px; border-radius: 20px; border: 2px solid #ffd700; margin-top: 50px; text-align: center; width: 320px; display: flex; flex-direction: column; gap: 15px; }
         input, select { padding: 12px; border-radius: 8px; border: none; text-align: center; font-weight: bold; }
-        .btn-gold { 
-            background: linear-gradient(#ffd700, #b8860b); color: #000; 
-            padding: 15px; border-radius: 12px; font-weight: bold; border: none; cursor: pointer; 
-        }
-        .btn-blue { 
-            background: linear-gradient(#4da3ff, #0052cc); color: white; 
-            padding: 15px; border-radius: 12px; font-weight: bold; border: none; cursor: pointer; 
-        }
-        .domino-card {
-            background: #1a1a1a; border: 2px solid #ffd700;
-            border-radius: 10px; width: 65px; height: 110px; margin: 8px;
-            display: flex; justify-content: center; align-items: center; 
-            font-size: 35px; color: #ffd700; box-shadow: 0 4px 8px rgba(0,0,0,0.5);
-        }
+        .btn-gold { background: linear-gradient(#ffd700, #b8860b); color: #000; padding: 15px; border-radius: 12px; font-weight: bold; border: none; cursor: pointer; }
+        .btn-red { background: linear-gradient(#ff4d4d, #b30000); color: white; padding: 10px; border-radius: 8px; font-weight: bold; border: none; cursor: pointer; margin-top: 20px; }
+        .domino-card { background: #1a1a1a; border: 2px solid #ffd700; border-radius: 10px; width: 70px; height: 110px; margin: 8px; display: flex; justify-content: center; align-items: center; font-size: 40px; color: #ff0000; text-shadow: 0 0 10px #000; box-shadow: 0 4px 15px rgba(0,0,0,0.5); font-weight: bold; }
+        #player-label { font-size: 1.2em; color: #ffd700; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
     </style>
 </head>
 <body>
 
     <div id="lobby" class="box">
         <h1 style="color:#ffd700; margin:0;">DOMINO MYSTIC</h1>
-        <p style="font-size: 12px; color: #aaa;">Versi Perbaikan Final</p>
         <input type="text" id="pName" placeholder="Nama Kamu">
-        <input type="text" id="rCodeInput" placeholder="Kode Room (Untuk Gabung)">
+        <input type="text" id="rCodeInput" placeholder="Kode Room">
         <select id="gameMode">
             <option value="spirit">Mode Spirit (Max 3)</option>
             <option value="bererong">Mode Bererong (Max 4)</option>
         </select>
-        <button id="btnBuat" class="btn-gold">BUAT ROOM BARU</button>
-        <button id="btnGabung" class="btn-blue">GABUNG ROOM</button>
+        <button id="btnBuat" class="btn-gold">BUAT ROOM</button>
+        <button id="btnGabung" class="btn-gold" style="background: #444; color: white;">GABUNG ROOM</button>
     </div>
 
     <div id="gameRoom" style="display:none; text-align:center; width: 100%; padding-top: 30px;">
-        <h2 id="displayKode" style="color:#ffd700; letter-spacing: 2px;"></h2>
-        <p id="displayMode" style="font-weight: bold; color: #00ff00;"></p>
-        
-        <div id="cardArea" style="display:flex; justify-content:center; flex-wrap:wrap; margin: 20px 0;">
-            </div>
-
-        <div style="display:flex; flex-direction:column; gap:10px; align-items:center;">
-            <button id="btnTarik" class="btn-gold" style="width:250px;">TARIK KARTU (MISTIK)</button>
-            <button onclick="location.reload()" style="background:none; color:white; border:none; text-decoration:underline; cursor:pointer;">Keluar Room</button>
-        </div>
+        <h2 id="displayKode" style="color:#ffd700;"></h2>
+        <div id="player-label"></div>
+        <div id="cardArea" style="display:flex; justify-content:center; flex-wrap:wrap; min-height: 120px;"></div>
+        <button id="btnTarik" class="btn-gold" style="width:250px; margin-top: 20px;">TARIK KARTU (MISTIK)</button>
+        <br>
+        <button id="btnMainLagi" class="btn-red">MAIN LAGI (RESET)</button>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // CONFIG FIREBASE - Pastikan Project ID Benar
         const firebaseConfig = {
-  apiKey: "AIzaSyDt4C2gQuyCS28359YP0nryXpv_ASqra8U",
-  authDomain: "putu-domino-7fa82.firebaseapp.com",
-  projectId: "putu-domino-7fa82",
-  storageBucket: "putu-domino-7fa82.firebasestorage.app",
-  messagingSenderId: "721819699355",
-  appId: "1:721819699355:web:feec9dcc605643d3bcde3e"
-};
-
+            apiKey: "AIzaSyDt4C2gQuyCS28359YP0nryXpv_ASqra8U",
+            authDomain: "putu-domino-7fa82.firebaseapp.com",
+            projectId: "putu-domino-7fa82",
+            storageBucket: "putu-domino-7fa82.firebasestorage.app",
+            messagingSenderId: "721819699355",
+            appId: "1:721819699355:web:feec9dcc605643d3bcde3e"
+        };
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const pId = Math.random().toString(36).substring(7);
 
-        // FUNGSI MASUK ROOM
         function aktifkanRoom(rId) {
             document.getElementById("lobby").style.display = "none";
             document.getElementById("gameRoom").style.display = "block";
@@ -89,64 +62,51 @@
             onSnapshot(doc(db, "rooms", rId), (snap) => {
                 if(!snap.exists()) return;
                 const data = snap.data();
-                document.getElementById("displayMode").innerText = "MODE: " + data.mode.toUpperCase();
-                
                 const me = data.players.find(p => p.id === pId);
                 if(me) {
-                    // Fitur Kartu Misteri (❓)
-                    document.getElementById("cardArea").innerHTML = me.cards.map(() => `
-                        <div class="domino-card">❓</div>
-                    `).join('');
+                    document.getElementById("player-label").innerText = "PEMAIN: " + me.name;
+                    document.getElementById("cardArea").innerHTML = me.cards.map(() => `<div class="domino-card">?</div>`).join('');
                 }
             });
 
-            // Logika Tarik Kartu
             document.getElementById("btnTarik").onclick = async () => {
                 const s = await getDoc(doc(db, "rooms", rId));
                 let d = s.data();
                 let ps = d.players;
                 let mIdx = ps.findIndex(p => p.id === pId);
                 let max = d.mode === "spirit" ? 3 : 4;
-
                 if(ps[mIdx].cards.length < max) {
-                    ps[mIdx].cards.push("hidden");
+                    ps[mIdx].cards.push("?");
                     await updateDoc(doc(db, "rooms", rId), { players: ps });
-                } else {
-                    alert("Sudah mencapai batas " + max + " kartu!");
-                }
+                } else { alert("Maksimal " + max + " kartu!"); }
+            };
+
+            document.getElementById("btnMainLagi").onclick = async () => {
+                const s = await getDoc(doc(db, "rooms", rId));
+                let ps = s.data().players;
+                ps.forEach(p => p.cards = []);
+                await updateDoc(doc(db, "rooms", rId), { players: ps });
             };
         }
 
-        // TOMBOL BUAT ROOM
-        document.getElementById("btnBuat").addEventListener("click", async () => {
-            const name = document.getElementById("pName").value;
-            const mode = document.getElementById("gameMode").value;
-            if(!name) return alert("Masukkan nama!");
-
+        document.getElementById("btnBuat").onclick = async () => {
+            const n = document.getElementById("pName").value;
+            if(!n) return alert("Isi nama!");
             const rId = Math.random().toString(36).substring(2, 6).toUpperCase();
-            await setDoc(doc(db, "rooms", rId), {
-                mode: mode,
-                players: [{ id: pId, name: name, cards: [] }]
-            });
+            await setDoc(doc(db, "rooms", rId), { mode: document.getElementById("gameMode").value, players: [{ id: pId, name: n, cards: [] }] });
             aktifkanRoom(rId);
-        });
+        };
 
-        // TOMBOL GABUNG ROOM
-        document.getElementById("btnGabung").addEventListener("click", async () => {
-            const name = document.getElementById("pName").value;
+        document.getElementById("btnGabung").onclick = async () => {
+            const n = document.getElementById("pName").value;
             const rId = document.getElementById("rCodeInput").value.toUpperCase();
-            if(!name || !rId) return alert("Lengkapi Nama & Kode!");
-
+            if(!n || !rId) return alert("Lengkapi data!");
             const s = await getDoc(doc(db, "rooms", rId));
-            if(!s.exists()) return alert("Room tidak ditemukan!");
-
+            if(!s.exists()) return alert("Room tidak ada!");
             let ps = s.data().players;
-            if(!ps.find(p => p.id === pId)) {
-                ps.push({ id: pId, name: name, cards: [] });
-                await updateDoc(doc(db, "rooms", rId), { players: ps });
-            }
+            if(!ps.find(p => p.id === pId)) { ps.push({ id: pId, name: n, cards: [] }); await updateDoc(doc(db, "rooms", rId), { players: ps }); }
             aktifkanRoom(rId);
-        });
+        };
     </script>
 </body>
 </html>
