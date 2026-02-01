@@ -12,7 +12,7 @@
             --felt-green: radial-gradient(circle, #0a4d28 0%, #052915 100%);
         }
 
-        /* 1. FIX LOBBY & LAYOUT CENTER */
+        /* LAYOUT & LOBBY (SUDAH BERHASIL) */
         html, body { 
             overscroll-behavior-y: contain; overflow: hidden; position: fixed; 
             width: 100%; height: 100%; margin: 0; font-family: 'Georgia', serif;
@@ -24,7 +24,6 @@
             background: rgba(0,0,0,0.9); padding: 30px; border-radius: 25px; 
             border: 2px solid var(--gold); text-align: center; width: 300px; 
             z-index: 10; backdrop-filter: blur(15px);
-            box-shadow: 0 20px 50px rgba(0,0,0,0.7);
             display: flex; flex-direction: column; align-items: center;
         }
 
@@ -40,14 +39,20 @@
             box-shadow: 0 4px 0 #665200; transition: 0.2s; margin: 5px 0;
         }
 
-        /* 2. KARTU & ANIMASI LEMPAR DARI TENGAH */
-        #cardArea { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; width: 100%; max-width: 400px; margin: 20px auto; }
-
-        .card-container { 
-            position: relative; width: 85px; height: 145px; 
-            perspective: 1000px; z-index: 10;
+        /* LOGIKA TOMBOL MATI (REDUP) */
+        .btn-gold:disabled {
+            background: #333;
+            color: #666;
+            box-shadow: none;
+            cursor: not-allowed;
+            filter: grayscale(1);
+            opacity: 0.6;
         }
 
+        /* ANIMASI LEMPAR (SUDAH BERHASIL) */
+        #cardArea { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; width: 100%; max-width: 400px; margin: 20px auto; }
+        .card-container { position: relative; width: 85px; height: 145px; perspective: 1000px; z-index: 10; }
+        
         @keyframes throwCard {
             0% { transform: scale(0) rotate(0deg) translate(-50%, -50%); opacity: 0; position: fixed; top: 50%; left: 50%; }
             100% { transform: scale(1) rotate(360deg) translate(0, 0); opacity: 1; position: relative; top: auto; left: auto; }
@@ -61,17 +66,27 @@
             box-shadow: 0 10px 20px rgba(0,0,0,0.5);
         }
 
-        /* 3. DETAIL TITIK (1 BESAR, 4-6 KECIL) */
-        .card-half { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); width: 60px; height: 60px; align-items: center; justify-items: center; }
+        /* PERBAIKAN TITIK (ANGKA 1 DI TENGAH & BESAR) */
+        .card-half { 
+            display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); 
+            width: 60px; height: 60px; align-items: center; justify-items: center; position: relative;
+        }
         .dot { background: #cc0000; border-radius: 50%; visibility: hidden; }
         .dot.active { visibility: visible; }
-        .size-1 { width: 30px; height: 30px; } /* Titik 1 sangat besar */
+        
+        /* Titik 1 diperbesar dan dipaksa ke tengah */
+        .size-1 { 
+            width: 38px; height: 38px; 
+            position: absolute; top: 50%; left: 50%; 
+            transform: translate(-50%, -50%); 
+            visibility: visible !important;
+        }
         .size-mid { width: 16px; height: 16px; }
-        .size-small { width: 12px; height: 12px; } /* Titik 4-6 kecil */
+        .size-small { width: 12px; height: 12px; }
 
         .line { width: 80%; height: 3px; background: #000; }
 
-        /* 4. EFEK KUPAS (PEELING) SESUAI VIDEO */
+        /* EFEK KUPAS (SUDAH BERHASIL) */
         .card-overlay { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
             background: #000; border: 2px solid var(--gold); border-radius: 12px; 
@@ -91,7 +106,7 @@
         <h1 style="color:var(--gold); margin:0;">DOMINO MYSTIC</h1>
         <p style="font-size: 10px; color: #888; margin-bottom: 20px;">ELEGANT EDITION</p>
         <input type="text" id="pName" placeholder="NAMA PEMAIN">
-        <input type="text" id="roomName" placeholder="NAMA ROOM (OPSIONAL)">
+        <input type="text" id="roomName" placeholder="NAMA ROOM">
         <input type="text" id="rCodeInput" placeholder="KODE ROOM">
         <select id="gameMode">
             <option value="spirit">MODE SPIRIT (MAX 3)</option>
@@ -105,9 +120,7 @@
         <div style="background:var(--gold); color:#000; padding:10px; font-weight:bold; margin-bottom:20px;" id="modeText">MODE: -</div>
         <h2 id="displayRoomName" style="color:var(--gold);"></h2>
         <div id="playerList" style="display:flex; justify-content:center; flex-wrap:wrap;"></div>
-        
         <div id="cardArea"></div>
-
         <div style="margin-top:20px; display:flex; flex-direction:column; align-items:center;">
             <button id="btnTarik" class="btn-gold" style="width:200px;">TARIK KARTU</button>
             <button id="btnGas" class="btn-gold" style="width:200px; display:none;">GAS! 🚀</button>
@@ -127,40 +140,33 @@
         let curRoom = ""; let pId = Math.random().toString(36).substring(7);
         const dotPatterns = [[], [4], [0, 8], [0, 4, 8], [0, 2, 6, 8], [0, 2, 4, 6, 8], [0, 2, 3, 5, 6, 8]];
 
-        // SFX FIX
+        // PERBAIKAN SOUND: KLIK PENDEK & SEDERHANA
         const sfx = {
-            draw: new Audio('https://assets.mixkit.co/active_storage/sfx/2005/2005-preview.mp3'),
+            draw: new Audio('https://www.soundjay.com/button/sounds/button-21.mp3'), // Suara klik pendek
             peel: new Audio('https://www.soundjay.com/misc/sounds/paper-slide-1.mp3')
         };
 
         function createDots(num) {
             let html = '<div class="card-half">';
-            const pattern = dotPatterns[num];
-            const size = num === 1 ? 'size-1' : (num >= 4 ? 'size-small' : 'size-mid');
-            for(let i=0; i<9; i++) html += `<div class="dot ${pattern.includes(i)?'active':''} ${size}"></div>`;
+            if (num === 1) {
+                html += `<div class="dot active size-1"></div>`;
+            } else {
+                const pattern = dotPatterns[num];
+                const size = num >= 4 ? 'size-small' : 'size-mid';
+                for(let i=0; i<9; i++) html += `<div class="dot ${pattern.includes(i)?'active':''} ${size}"></div>`;
+            }
             return html + '</div>';
         }
 
-        // LOGIKA KELUPAS SESUAI VIDEO
         window.initPeel = function(e, el) {
             if(e.cancelable) e.preventDefault();
             const rect = el.getBoundingClientRect();
             sfx.peel.play();
-            
             const handleMove = (me) => {
-                const x = (me.clientX || me.touches[0].clientX) - rect.left;
                 const y = (me.clientY || me.touches[0].clientY) - rect.top;
                 const percent = Math.min(100, (y / rect.height) * 100);
-                
-                // Efek melipat ke bawah/atas
                 el.style.transform = `rotateX(${percent * 0.8}deg) translateY(${percent}px)`;
-                if(navigator.vibrate && Math.floor(percent)%20===0) navigator.vibrate(10);
-                
-                if(percent > 80) {
-                    el.classList.add('opened');
-                    if(navigator.vibrate) navigator.vibrate(30);
-                    stop();
-                }
+                if(percent > 80) { el.classList.add('opened'); stop(); }
             };
             const stop = () => { window.removeEventListener('pointermove', handleMove); window.removeEventListener('touchmove', handleMove); };
             window.addEventListener('pointermove', handleMove);
@@ -184,7 +190,6 @@
             const count = area.querySelectorAll('.card-container').length;
 
             if(me.cards.length > count) {
-                // ANIMASI LEMPAR DARI TENGAH
                 const c = me.cards[me.cards.length-1].split('/');
                 area.insertAdjacentHTML('beforeend', `
                     <div class="card-container thrown">
@@ -193,27 +198,35 @@
                     </div>
                 `);
                 sfx.draw.play();
-                if(navigator.vibrate) navigator.vibrate(20);
             }
 
-            document.getElementById("btnTarik").style.display = (me.cards.length === 1 && !me.ready) ? "none" : "block";
-            document.getElementById("btnGas").style.display = (me.cards.length === 1 && !me.ready) ? "block" : "none";
-            document.getElementById("btnTarik").disabled = !everyoneReady || (d.players[d.turnIndex].id !== pId) || me.cards.length >= (d.mode==='spirit'?3:4);
-            document.getElementById("turnMsg").innerText = !everyoneReady ? "Menunggu pemain GAS..." : (d.players[d.turnIndex].id === pId ? "GILIRAN ANDA!" : "Giliran: " + d.players[d.turnIndex].name);
+            // PERBAIKAN LOGIKA TOMBOL MATI/REDUP
+            const maxCards = d.mode === 'spirit' ? 3 : 4;
+            const isMyTurn = everyoneReady && (d.players[d.turnIndex].id === pId);
+            const btnTarik = document.getElementById("btnTarik");
+
+            if(me.cards.length === 1 && !me.ready) {
+                btnTarik.style.display = "none";
+                document.getElementById("btnGas").style.display = "block";
+            } else {
+                btnTarik.style.display = "block";
+                document.getElementById("btnGas").style.display = "none";
+                // Tombol mati jika kartu sudah max
+                btnTarik.disabled = !isMyTurn || me.cards.length >= maxCards;
+            }
+            document.getElementById("turnMsg").innerText = !everyoneReady ? "Menunggu pemain GAS..." : (isMyTurn ? "GILIRAN ANDA!" : "Giliran: " + d.players[d.turnIndex].name);
         }
 
-        // ACTIONS
         document.getElementById("btnBuat").onclick = async () => {
             const rId = Math.random().toString(36).substring(2,7).toUpperCase();
             let deck = []; for(let i=0; i<=6; i++) for(let j=i; j<=6; j++) deck.push(`${i}/${j}`);
             deck.sort(() => Math.random()-0.5);
-            const data = {
+            await setDoc(doc(db, "rooms", rId), {
                 mode: document.getElementById("gameMode").value,
                 roomName: document.getElementById("roomName").value || "MYSTIC ROOM",
-                players: [{id:pId, name:document.getElementById("pName").value || "Player 1", cards:[deck.pop()], ready:false}],
+                players: [{id:pId, name:document.getElementById("pName").value || "Player", cards:[deck.pop()], ready:false}],
                 deck: deck, turnIndex: 0
-            };
-            await setDoc(doc(db, "rooms", rId), data);
+            });
             start(rId);
         };
 
@@ -247,7 +260,6 @@
             await updateDoc(doc(db, "rooms", curRoom), { players: d.players });
         };
 
-        // FIX RESET BUTTON
         document.getElementById("btnReset").onclick = async () => {
             if(confirm("Reset permainan?")){
                 let deck = []; for(let i=0; i<=6; i++) for(let j=i; j<=6; j++) deck.push(`${i}/${j}`);
