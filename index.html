@@ -3,98 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Domino Mystic - Final Anti-Duplicate</title>
+    <title>Domino Mystic - Pro Edition</title>
     <style>
         :root {
-            --gold: #ffd700;
-            --deep-gold: #b8860b;
-            --ivory: #ffcc00;
+            --gold: #ffd700; --deep-gold: #b8860b; --ivory: #ffcc00;
             --felt-green: radial-gradient(circle, #0a4d28 0%, #052915 100%);
         }
-
         html, body { 
             overscroll-behavior-y: contain; overflow: hidden; position: fixed; 
             width: 100%; height: 100%; margin: 0; font-family: 'Georgia', serif;
             background: var(--felt-green); color: white;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
-
         .box { 
             background: rgba(0,0,0,0.9); padding: 30px; border-radius: 25px; 
             border: 2px solid var(--gold); text-align: center; width: 300px; 
             z-index: 10; backdrop-filter: blur(15px);
             display: flex; flex-direction: column; align-items: center;
         }
-
         input, select { 
             width: 90%; padding: 12px; margin-bottom: 10px; border-radius: 10px; 
             border: 1px solid #444; background: #111; color: var(--gold); font-weight: bold; text-align: center;
         }
-
         .btn-gold { 
             width: 100%; background: linear-gradient(var(--gold), var(--deep-gold)); 
             color: #000; padding: 15px; border-radius: 12px; font-weight: bold; 
             border: none; cursor: pointer; font-size: 16px; text-transform: uppercase;
             box-shadow: 0 4px 0 #665200; transition: 0.2s; margin: 5px 0;
         }
-
-        .btn-gold:disabled {
-            background: #333; color: #666; box-shadow: none; cursor: not-allowed; opacity: 0.6; filter: grayscale(1);
-        }
-
+        .btn-gold:disabled { opacity: 0.5; filter: grayscale(1); cursor: not-allowed; }
+        
         #cardArea { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; width: 100%; max-width: 400px; margin: 20px auto; }
         .card-container { position: relative; width: 85px; height: 145px; perspective: 1000px; z-index: 10; }
-        
+        .thrown { animation: throwCard 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         @keyframes throwCard {
             0% { transform: scale(0) rotate(0deg) translate(-50%, -50%); opacity: 0; position: fixed; top: 50%; left: 50%; }
             100% { transform: scale(1) rotate(360deg) translate(0, 0); opacity: 1; position: relative; top: auto; left: auto; }
         }
-        .thrown { animation: throwCard 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-
         .domino-card { 
             background: var(--ivory); border: 2px solid #000; border-radius: 12px; 
             width: 100%; height: 100%; display: flex; flex-direction: column; 
             justify-content: space-around; align-items: center; position: absolute;
             box-shadow: 0 10px 20px rgba(0,0,0,0.5);
         }
-
-        .card-half { 
-            display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); 
-            width: 60px; height: 60px; align-items: center; justify-items: center; position: relative;
-        }
+        .card-half { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); width: 60px; height: 60px; align-items: center; justify-items: center; position: relative; }
         .dot { background: #cc0000; border-radius: 50%; visibility: hidden; }
         .dot.active { visibility: visible; }
-        
-        .size-1 { 
-            width: 38px; height: 38px; position: absolute; top: 50%; left: 50%; 
-            transform: translate(-50%, -50%); visibility: visible !important; 
-        }
+        .size-1 { width: 38px; height: 38px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); visibility: visible !important; }
         .size-mid { width: 16px; height: 16px; }
         .size-small { width: 12px; height: 12px; }
-
         .line { width: 80%; height: 3px; background: #000; }
-
-        .card-overlay { 
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-            background: #000; border: 2px solid var(--gold); border-radius: 12px; 
-            z-index: 15; cursor: pointer; transform-origin: top left;
-            transition: transform 0.1s linear, opacity 0.3s;
-        }
+        .card-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; border: 2px solid var(--gold); border-radius: 12px; z-index: 15; cursor: pointer; transform-origin: top left; transition: transform 0.1s linear, opacity 0.3s; }
         .card-overlay.opened { opacity: 0; pointer-events: none; }
 
         #roomUI { width: 100%; text-align: center; display: none; }
-        .player-badge { padding: 8px 15px; background: rgba(0,0,0,0.6); border-radius: 20px; border: 1px solid var(--gold); margin: 5px; font-size: 14px; }
+        .player-badge { padding: 8px 15px; background: rgba(0,0,0,0.6); border-radius: 20px; border: 1px solid var(--gold); margin: 5px; font-size: 14px; position: relative; }
         .active-turn { background: var(--gold); color: #000; box-shadow: 0 0 15px var(--gold); }
-        #voteStatus { font-size: 12px; color: #ff4444; margin-top: 5px; font-weight: bold; }
+        .kick-btn { color: #ff4444; border: none; background: none; font-weight: bold; cursor: pointer; margin-left: 5px; font-size: 10px; }
+
+        /* Panel Vote */
+        #votePanel { 
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.95); border: 3px solid var(--gold); padding: 20px;
+            border-radius: 20px; z-index: 100; display: none; width: 250px;
+        }
     </style>
 </head>
 <body>
 
     <div id="lobby" class="box">
         <h1 style="color:var(--gold); margin:0;">DOMINO MYSTIC</h1>
-        <p style="font-size: 10px; color: #888; margin-bottom: 20px;">ELEGANT EDITION</p>
         <input type="text" id="pName" placeholder="NAMA PEMAIN">
-        <input type="text" id="rCodeInput" placeholder="KODE ROOM (UNTUK GABUNG)">
+        <input type="text" id="rCodeInput" placeholder="KODE ROOM">
         <select id="gameMode">
             <option value="spirit">MODE SPIRIT (MAX 3)</option>
             <option value="bererong">MODE BERERONG (MAX 4)</option>
@@ -104,17 +84,23 @@
     </div>
 
     <div id="roomUI">
-        <div style="background:var(--gold); color:#000; padding:10px; font-weight:bold; margin-bottom:20px;" id="modeText">MODE: -</div>
+        <div style="background:var(--gold); color:#000; padding:10px; font-weight:bold; margin-bottom:10px;" id="modeText">MODE: -</div>
         <h2 id="displayRoomCode" style="color:var(--gold); letter-spacing: 2px;"></h2>
         <div id="playerList" style="display:flex; justify-content:center; flex-wrap:wrap;"></div>
         <div id="cardArea"></div>
         <div style="margin-top:20px; display:flex; flex-direction:column; align-items:center;">
             <button id="btnTarik" class="btn-gold" style="width:200px;">TARIK KARTU</button>
             <button id="btnGas" class="btn-gold" style="width:200px; display:none;">GAS! 🚀</button>
-            <p id="turnMsg" style="font-style:italic; margin-top:10px;"></p>
-            <button id="btnReset" style="background:none; color:var(--gold); border:none; text-decoration:underline; margin-top:20px; cursor:pointer;">RESET PERMAINAN</button>
-            <div id="voteStatus"></div>
+            <p id="turnMsg" style="font-style:italic; margin:10px;"></p>
+            <button id="btnResetRequest" style="background:none; color:var(--gold); border:none; text-decoration:underline; cursor:pointer;">AJAK RESET GAME</button>
         </div>
+    </div>
+
+    <div id="votePanel">
+        <h3 style="color:var(--gold); margin-top:0;">Vote Reset?</h3>
+        <p id="voteInfo" style="font-size: 12px;"></p>
+        <button id="btnVoteYes" class="btn-gold">SETUJU</button>
+        <button id="btnVoteNo" class="btn-gold" style="background:#444; color:white;">TIDAK</button>
     </div>
 
     <script type="module">
@@ -126,8 +112,8 @@
         const db = getFirestore(app);
 
         let curRoom = ""; let pId = Math.random().toString(36).substring(7);
+        let isProcessing = false; // Anti-Klik Ganda
         const dotPatterns = [[], [4], [0, 8], [0, 4, 8], [0, 2, 6, 8], [0, 2, 4, 6, 8], [0, 2, 3, 5, 6, 8]];
-
         const sfxClick = new Audio('https://www.soundjay.com/button/sounds/button-21.mp3');
         function playClick() { sfxClick.currentTime = 0; sfxClick.play().catch(() => {}); }
 
@@ -158,57 +144,78 @@
         };
 
         function render(d, rId) {
+            // Kick Logic: Jika ID saya tidak ada di daftar pemain
+            if (!d.players.find(p => p.id === pId)) {
+                alert("Anda telah dikeluarkan dari room.");
+                location.reload(); return;
+            }
+
             document.getElementById("modeText").innerText = "MODE: " + d.mode.toUpperCase();
             document.getElementById("displayRoomCode").innerText = "KODE ROOM: " + rId;
+            
             const me = d.players.find(p => p.id === pId);
+            const isHost = d.players[0].id === pId; // Pembuat room adalah index 0
             const everyoneReady = d.players.every(p => p.ready);
 
+            // Render Player List + Kick Button
             document.getElementById("playerList").innerHTML = d.players.map((p, i) => `
                 <div class="player-badge ${everyoneReady && i === d.turnIndex ? 'active-turn' : ''}">
                     ${p.name} (${p.cards.length}) ${p.ready?'✓':''}
+                    ${isHost && i !== 0 ? `<button class="kick-btn" onclick="window.kickPlayer('${p.id}')">KICK</button>` : ''}
                 </div>
             `).join('');
 
+            // Card Rendering
             const area = document.getElementById("cardArea");
             const count = area.querySelectorAll('.card-container').length;
             if(me.cards.length > count) {
                 const c = me.cards[me.cards.length-1].split('/');
-                area.insertAdjacentHTML('beforeend', `
-                    <div class="card-container thrown">
-                        <div class="domino-card">${createDots(parseInt(c[0]))}<div class="line"></div>${createDots(parseInt(c[1]))}</div>
-                        <div class="card-overlay" onpointerdown="initPeel(event, this)"></div>
-                    </div>
-                `);
+                area.insertAdjacentHTML('beforeend', `<div class="card-container thrown"><div class="domino-card">${createDots(parseInt(c[0]))}<div class="line"></div>${createDots(parseInt(c[1]))}</div><div class="card-overlay" onpointerdown="initPeel(event, this)"></div></div>`);
             }
 
-            const votes = d.resetVotes || [];
-            document.getElementById("voteStatus").innerText = votes.length > 0 ? `⚠️ Vote Reset: ${votes.length}/${d.players.length}` : "";
+            // Vote UI Logic
+            const panel = document.getElementById("votePanel");
+            const votes = d.resetVotes || {};
+            if (d.voteActive) {
+                panel.style.display = "block";
+                document.getElementById("voteInfo").innerText = `Setuju: ${Object.keys(votes).length}/${d.players.length}`;
+            } else {
+                panel.style.display = "none";
+            }
 
+            // Button Logic
             const maxCards = d.mode === 'spirit' ? 3 : 4;
             const isMyTurn = everyoneReady && (d.players[d.turnIndex].id === pId);
             const btnTarik = document.getElementById("btnTarik");
-
             if(me.cards.length === 1 && !me.ready) {
-                btnTarik.style.display = "none";
-                document.getElementById("btnGas").style.display = "block";
+                btnTarik.style.display = "none"; document.getElementById("btnGas").style.display = "block";
             } else {
-                btnTarik.style.display = "block";
-                document.getElementById("btnGas").style.display = "none";
-                btnTarik.disabled = !isMyTurn || me.cards.length >= maxCards;
+                btnTarik.style.display = "block"; document.getElementById("btnGas").style.display = "none";
+                btnTarik.disabled = !isMyTurn || me.cards.length >= maxCards || isProcessing;
             }
             document.getElementById("turnMsg").innerText = !everyoneReady ? "Menunggu pemain GAS..." : (isMyTurn ? "GILIRAN ANDA!" : "Giliran: " + d.players[d.turnIndex].name);
         }
+
+        // FUNGSI KICK
+        window.kickPlayer = async (targetId) => {
+            if (!confirm("Kick pemain ini?")) return;
+            const roomRef = doc(db, "rooms", curRoom);
+            await runTransaction(db, async (t) => {
+                const s = await t.get(roomRef); let d = s.data();
+                d.players = d.players.filter(p => p.id !== targetId);
+                t.update(roomRef, { players: d.players });
+            });
+        };
 
         document.getElementById("btnBuat").onclick = async () => {
             playClick();
             const rId = Math.random().toString(36).substring(2,7).toUpperCase();
             let deck = []; for(let i=0; i<=6; i++) for(let j=i; j<=6; j++) deck.push(`${i}/${j}`);
             deck.sort(() => Math.random()-0.5);
-            const firstCard = deck.pop(); 
             await setDoc(doc(db, "rooms", rId), {
                 mode: document.getElementById("gameMode").value,
-                players: [{id:pId, name:document.getElementById("pName").value || "Player", cards:[firstCard], ready:false}],
-                deck: deck, turnIndex: 0, resetVotes: []
+                players: [{id:pId, name:document.getElementById("pName").value || "Host", cards:[deck.pop()], ready:false}],
+                deck: deck, turnIndex: 0, resetVotes: {}, voteActive: false
             });
             start(rId);
         };
@@ -217,19 +224,15 @@
             playClick();
             const rId = document.getElementById("rCodeInput").value.toUpperCase();
             const roomRef = doc(db, "rooms", rId);
-            try {
-                await runTransaction(db, async (transaction) => {
-                    const s = await transaction.get(roomRef);
-                    if (!s.exists()) throw "Room tidak ada";
-                    let d = s.data();
-                    if (!d.players.find(p => p.id === pId)) {
-                        const card = d.deck.pop();
-                        d.players.push({id:pId, name:document.getElementById("pName").value || "Guest", cards:[card], ready:false});
-                        transaction.update(roomRef, { players: d.players, deck: d.deck });
-                    }
-                });
-                start(rId);
-            } catch(e) { alert(e); }
+            await runTransaction(db, async (t) => {
+                const s = await t.get(roomRef); if(!s.exists()) return;
+                let d = s.data();
+                if(!d.players.find(p => p.id === pId)){
+                    d.players.push({id:pId, name:document.getElementById("pName").value || "Guest", cards:[d.deck.pop()], ready:false});
+                    t.update(roomRef, {players: d.players, deck: d.deck});
+                }
+            });
+            start(rId);
         };
 
         function start(rId) {
@@ -238,54 +241,62 @@
         }
 
         document.getElementById("btnTarik").onclick = async () => {
-            playClick();
+            if(isProcessing) return; isProcessing = true; playClick();
             const roomRef = doc(db, "rooms", curRoom);
-            await runTransaction(db, async (transaction) => {
-                const s = await transaction.get(roomRef);
-                let d = s.data();
-                if (d.deck.length > 0) {
-                    const card = d.deck.pop();
-                    const idx = d.players.findIndex(p => p.id === pId);
-                    d.players[idx].cards.push(card);
-                    transaction.update(roomRef, { 
-                        players: d.players, 
-                        deck: d.deck, 
-                        turnIndex: (d.turnIndex + 1) % d.players.length 
-                    });
+            await runTransaction(db, async (t) => {
+                const s = await t.get(roomRef); let d = s.data();
+                if(d.deck.length > 0){
+                    const c = d.deck.pop(); const idx = d.players.findIndex(p => p.id === pId);
+                    d.players[idx].cards.push(c);
+                    t.update(roomRef, { players: d.players, deck: d.deck, turnIndex: (d.turnIndex+1)%d.players.length });
                 }
             });
+            setTimeout(() => isProcessing = false, 1500);
         };
 
         document.getElementById("btnGas").onclick = async () => {
             playClick();
             const roomRef = doc(db, "rooms", curRoom);
-            await runTransaction(db, async (transaction) => {
-                const s = await transaction.get(roomRef);
-                let d = s.data();
+            await runTransaction(db, async (t) => {
+                const s = await t.get(roomRef); let d = s.data();
                 d.players.find(p => p.id === pId).ready = true;
-                transaction.update(roomRef, { players: d.players });
+                t.update(roomRef, { players: d.players });
             });
         };
 
-        document.getElementById("btnReset").onclick = async () => {
+        // SISTEM VOTE RESET BARU
+        document.getElementById("btnResetRequest").onclick = async () => {
             playClick();
             const roomRef = doc(db, "rooms", curRoom);
-            await runTransaction(db, async (transaction) => {
-                const s = await transaction.get(roomRef);
-                let d = s.data();
-                let votes = d.resetVotes || [];
-                if (!votes.includes(pId)) {
-                    votes.push(pId);
-                    if (votes.length >= d.players.length) {
-                        let deck = []; for(let i=0; i<=6; i++) for(let j=i; j<=6; j++) deck.push(`${i}/${j}`);
-                        deck.sort(() => Math.random()-0.5);
-                        d.players.forEach(p => { p.cards = [deck.pop()]; p.ready = false; });
-                        transaction.update(roomRef, { players: d.players, deck: deck, turnIndex: 0, resetVotes: [] });
-                        document.getElementById("cardArea").innerHTML = "";
-                    } else {
-                        transaction.update(roomRef, { resetVotes: votes });
-                    }
+            await runTransaction(db, async (t) => {
+                t.update(roomRef, { voteActive: true, resetVotes: { [pId]: true } });
+            });
+        };
+
+        document.getElementById("btnVoteYes").onclick = async () => {
+            playClick();
+            const roomRef = doc(db, "rooms", curRoom);
+            await runTransaction(db, async (t) => {
+                const s = await t.get(roomRef); let d = s.data();
+                d.resetVotes[pId] = true;
+                if (Object.keys(d.resetVotes).length >= d.players.length) {
+                    // Reset Game Total
+                    let deck = []; for(let i=0; i<=6; i++) for(let j=i; j<=6; j++) deck.push(`${i}/${j}`);
+                    deck.sort(() => Math.random()-0.5);
+                    d.players.forEach(p => { p.cards = [deck.pop()]; p.ready = false; });
+                    t.update(roomRef, { players: d.players, deck: deck, turnIndex: 0, resetVotes: {}, voteActive: false });
+                    document.getElementById("cardArea").innerHTML = "";
+                } else {
+                    t.update(roomRef, { resetVotes: d.resetVotes });
                 }
+            });
+        };
+
+        document.getElementById("btnVoteNo").onclick = async () => {
+            playClick();
+            const roomRef = doc(db, "rooms", curRoom);
+            await runTransaction(db, async (t) => {
+                t.update(roomRef, { voteActive: false, resetVotes: {} });
             });
         };
     </script>
