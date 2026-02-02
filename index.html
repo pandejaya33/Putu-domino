@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Domino Mystic - Ultimate Anti-Duplicate</title>
+    <title>Domino Mystic - Final Anti-Duplicate</title>
     <style>
         :root {
             --gold: #ffd700;
@@ -65,7 +65,6 @@
         .dot { background: #cc0000; border-radius: 50%; visibility: hidden; }
         .dot.active { visibility: visible; }
         
-        /* Titik 1 Besar di Tengah (SUDAH FIX) */
         .size-1 { 
             width: 38px; height: 38px; position: absolute; top: 50%; left: 50%; 
             transform: translate(-50%, -50%); visibility: visible !important; 
@@ -86,6 +85,7 @@
         #roomUI { width: 100%; text-align: center; display: none; }
         .player-badge { padding: 8px 15px; background: rgba(0,0,0,0.6); border-radius: 20px; border: 1px solid var(--gold); margin: 5px; font-size: 14px; }
         .active-turn { background: var(--gold); color: #000; box-shadow: 0 0 15px var(--gold); }
+        #voteStatus { font-size: 12px; color: #ff4444; margin-top: 5px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -113,12 +113,13 @@
             <button id="btnGas" class="btn-gold" style="width:200px; display:none;">GAS! 🚀</button>
             <p id="turnMsg" style="font-style:italic; margin-top:10px;"></p>
             <button id="btnReset" style="background:none; color:var(--gold); border:none; text-decoration:underline; margin-top:20px; cursor:pointer;">RESET PERMAINAN</button>
+            <div id="voteStatus"></div>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, runTransaction, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = { apiKey: "AIzaSyDt4C2gQuyCS28359YP0nryXpv_ASqra8U", authDomain: "putu-domino-7fa82.firebaseapp.com", projectId: "putu-domino-7fa82", storageBucket: "putu-domino-7fa82.firebasestorage.app", messagingSenderId: "721819699355", appId: "1:721819699355:web:feec9dcc605643d3bcde3e" };
         const app = initializeApp(firebaseConfig);
@@ -127,15 +128,13 @@
         let curRoom = ""; let pId = Math.random().toString(36).substring(7);
         const dotPatterns = [[], [4], [0, 8], [0, 4, 8], [0, 2, 6, 8], [0, 2, 4, 6, 8], [0, 2, 3, 5, 6, 8]];
 
-        // SFX: KLIK SINGKAT (SUDAH FIX)
         const sfxClick = new Audio('https://www.soundjay.com/button/sounds/button-21.mp3');
         function playClick() { sfxClick.currentTime = 0; sfxClick.play().catch(() => {}); }
 
         function createDots(num) {
             let html = '<div class="card-half">';
-            if (num === 1) {
-                html += `<div class="dot active size-1"></div>`;
-            } else {
+            if (num === 1) { html += `<div class="dot active size-1"></div>`; } 
+            else {
                 const pattern = dotPatterns[num];
                 const size = num >= 4 ? 'size-small' : 'size-mid';
                 for(let i=0; i<9; i++) html += `<div class="dot ${pattern.includes(i)?'active':''} ${size}"></div>`;
@@ -172,7 +171,6 @@
 
             const area = document.getElementById("cardArea");
             const count = area.querySelectorAll('.card-container').length;
-
             if(me.cards.length > count) {
                 const c = me.cards[me.cards.length-1].split('/');
                 area.insertAdjacentHTML('beforeend', `
@@ -182,6 +180,9 @@
                     </div>
                 `);
             }
+
+            const votes = d.resetVotes || [];
+            document.getElementById("voteStatus").innerText = votes.length > 0 ? `⚠️ Vote Reset: ${votes.length}/${d.players.length}` : "";
 
             const maxCards = d.mode === 'spirit' ? 3 : 4;
             const isMyTurn = everyoneReady && (d.players[d.turnIndex].id === pId);
@@ -203,12 +204,11 @@
             const rId = Math.random().toString(36).substring(2,7).toUpperCase();
             let deck = []; for(let i=0; i<=6; i++) for(let j=i; j<=6; j++) deck.push(`${i}/${j}`);
             deck.sort(() => Math.random()-0.5);
-            // Kartu pertama ditarik
             const firstCard = deck.pop(); 
             await setDoc(doc(db, "rooms", rId), {
                 mode: document.getElementById("gameMode").value,
                 players: [{id:pId, name:document.getElementById("pName").value || "Player", cards:[firstCard], ready:false}],
-                deck: deck, turnIndex: 0
+                deck: deck, turnIndex: 0, resetVotes: []
             });
             start(rId);
         };
@@ -217,17 +217,19 @@
             playClick();
             const rId = document.getElementById("rCodeInput").value.toUpperCase();
             const roomRef = doc(db, "rooms", rId);
-            const s = await getDoc(roomRef);
-            if(s.exists()){
-                let d = s.data();
-                if(!d.players.find(p => p.id === pId)){
-                    // Ambil kartu unik dan kurangi deck
-                    const initialCard = d.deck.pop(); 
-                    d.players.push({id:pId, name:document.getElementById("pName").value || "Guest", cards:[initialCard], ready:false});
-                    await updateDoc(roomRef, {players: d.players, deck: d.deck});
-                }
+            try {
+                await runTransaction(db, async (transaction) => {
+                    const s = await transaction.get(roomRef);
+                    if (!s.exists()) throw "Room tidak ada";
+                    let d = s.data();
+                    if (!d.players.find(p => p.id === pId)) {
+                        const card = d.deck.pop();
+                        d.players.push({id:pId, name:document.getElementById("pName").value || "Guest", cards:[card], ready:false});
+                        transaction.update(roomRef, { players: d.players, deck: d.deck });
+                    }
+                });
                 start(rId);
-            }
+            } catch(e) { alert(e); }
         };
 
         function start(rId) {
@@ -235,42 +237,56 @@
             onSnapshot(doc(db, "rooms", rId), (s) => { if(s.exists()) render(s.data(), rId); });
         }
 
-        // PERBAIKAN LOGIKA ANTI-KEMBAR
         document.getElementById("btnTarik").onclick = async () => {
             playClick();
             const roomRef = doc(db, "rooms", curRoom);
-            const s = await getDoc(roomRef);
-            let d = s.data();
-            
-            if(d.deck.length > 0) {
-                const pulled = d.deck.pop(); // Tarik kartu terakhir
-                const myIdx = d.players.findIndex(p => p.id === pId);
-                d.players[myIdx].cards.push(pulled);
-                // Update deck & giliran secara bersamaan
-                await updateDoc(roomRef, { 
-                    players: d.players, 
-                    deck: d.deck, 
-                    turnIndex: (d.turnIndex + 1) % d.players.length 
-                });
-            }
+            await runTransaction(db, async (transaction) => {
+                const s = await transaction.get(roomRef);
+                let d = s.data();
+                if (d.deck.length > 0) {
+                    const card = d.deck.pop();
+                    const idx = d.players.findIndex(p => p.id === pId);
+                    d.players[idx].cards.push(card);
+                    transaction.update(roomRef, { 
+                        players: d.players, 
+                        deck: d.deck, 
+                        turnIndex: (d.turnIndex + 1) % d.players.length 
+                    });
+                }
+            });
         };
 
         document.getElementById("btnGas").onclick = async () => {
             playClick();
-            const s = await getDoc(doc(db, "rooms", curRoom)); let d = s.data();
-            d.players.find(p => p.id === pId).ready = true;
-            await updateDoc(doc(db, "rooms", curRoom), { players: d.players });
+            const roomRef = doc(db, "rooms", curRoom);
+            await runTransaction(db, async (transaction) => {
+                const s = await transaction.get(roomRef);
+                let d = s.data();
+                d.players.find(p => p.id === pId).ready = true;
+                transaction.update(roomRef, { players: d.players });
+            });
         };
 
         document.getElementById("btnReset").onclick = async () => {
-            if(confirm("Reset permainan?")){
-                let deck = []; for(let i=0; i<=6; i++) for(let j=i; j<=6; j++) deck.push(`${i}/${j}`);
-                deck.sort(() => Math.random()-0.5);
-                const s = await getDoc(doc(db, "rooms", curRoom)); let d = s.data();
-                d.players.forEach(p => { p.cards = [deck.pop()]; p.ready = false; });
-                await updateDoc(doc(db, "rooms", curRoom), { players: d.players, deck: deck, turnIndex: 0 });
-                document.getElementById("cardArea").innerHTML = "";
-            }
+            playClick();
+            const roomRef = doc(db, "rooms", curRoom);
+            await runTransaction(db, async (transaction) => {
+                const s = await transaction.get(roomRef);
+                let d = s.data();
+                let votes = d.resetVotes || [];
+                if (!votes.includes(pId)) {
+                    votes.push(pId);
+                    if (votes.length >= d.players.length) {
+                        let deck = []; for(let i=0; i<=6; i++) for(let j=i; j<=6; j++) deck.push(`${i}/${j}`);
+                        deck.sort(() => Math.random()-0.5);
+                        d.players.forEach(p => { p.cards = [deck.pop()]; p.ready = false; });
+                        transaction.update(roomRef, { players: d.players, deck: deck, turnIndex: 0, resetVotes: [] });
+                        document.getElementById("cardArea").innerHTML = "";
+                    } else {
+                        transaction.update(roomRef, { resetVotes: votes });
+                    }
+                }
+            });
         };
     </script>
 </body>
