@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Domino Mystic - Ultimate Edition</title>
+    <title>Domino Mystic - Ultimate Anti-Duplicate</title>
     <style>
         :root {
             --gold: #ffd700;
@@ -65,12 +65,10 @@
         .dot { background: #cc0000; border-radius: 50%; visibility: hidden; }
         .dot.active { visibility: visible; }
         
-        /* Titik 1 Tetap Besar di Tengah */
+        /* Titik 1 Besar di Tengah (SUDAH FIX) */
         .size-1 { 
-            width: 38px; height: 38px; 
-            position: absolute; top: 50%; left: 50%; 
-            transform: translate(-50%, -50%); 
-            visibility: visible !important; 
+            width: 38px; height: 38px; position: absolute; top: 50%; left: 50%; 
+            transform: translate(-50%, -50%); visibility: visible !important; 
         }
         .size-mid { width: 16px; height: 16px; }
         .size-small { width: 12px; height: 12px; }
@@ -129,9 +127,8 @@
         let curRoom = ""; let pId = Math.random().toString(36).substring(7);
         const dotPatterns = [[], [4], [0, 8], [0, 4, 8], [0, 2, 6, 8], [0, 2, 4, 6, 8], [0, 2, 3, 5, 6, 8]];
 
-        // SFX REVISI: HANYA KLIK SINGKAT
+        // SFX: KLIK SINGKAT (SUDAH FIX)
         const sfxClick = new Audio('https://www.soundjay.com/button/sounds/button-21.mp3');
-
         function playClick() { sfxClick.currentTime = 0; sfxClick.play().catch(() => {}); }
 
         function createDots(num) {
@@ -149,7 +146,6 @@
         window.initPeel = function(e, el) {
             if(e.cancelable) e.preventDefault();
             const rect = el.getBoundingClientRect();
-            // Suara ditiadakan agar intip kartu tenang
             const handleMove = (me) => {
                 const y = (me.clientY || me.touches[0].clientY) - rect.top;
                 const percent = Math.min(100, (y / rect.height) * 100);
@@ -197,7 +193,6 @@
             } else {
                 btnTarik.style.display = "block";
                 document.getElementById("btnGas").style.display = "none";
-                // Tombol mati/redup jika kartu penuh
                 btnTarik.disabled = !isMyTurn || me.cards.length >= maxCards;
             }
             document.getElementById("turnMsg").innerText = !everyoneReady ? "Menunggu pemain GAS..." : (isMyTurn ? "GILIRAN ANDA!" : "Giliran: " + d.players[d.turnIndex].name);
@@ -208,9 +203,11 @@
             const rId = Math.random().toString(36).substring(2,7).toUpperCase();
             let deck = []; for(let i=0; i<=6; i++) for(let j=i; j<=6; j++) deck.push(`${i}/${j}`);
             deck.sort(() => Math.random()-0.5);
+            // Kartu pertama ditarik
+            const firstCard = deck.pop(); 
             await setDoc(doc(db, "rooms", rId), {
                 mode: document.getElementById("gameMode").value,
-                players: [{id:pId, name:document.getElementById("pName").value || "Player", cards:[deck.pop()], ready:false}],
+                players: [{id:pId, name:document.getElementById("pName").value || "Player", cards:[firstCard], ready:false}],
                 deck: deck, turnIndex: 0
             });
             start(rId);
@@ -219,12 +216,15 @@
         document.getElementById("btnGabung").onclick = async () => {
             playClick();
             const rId = document.getElementById("rCodeInput").value.toUpperCase();
-            const s = await getDoc(doc(db, "rooms", rId));
+            const roomRef = doc(db, "rooms", rId);
+            const s = await getDoc(roomRef);
             if(s.exists()){
                 let d = s.data();
                 if(!d.players.find(p => p.id === pId)){
-                    d.players.push({id:pId, name:document.getElementById("pName").value || "Guest", cards:[d.deck.pop()], ready:false});
-                    await updateDoc(doc(db, "rooms", rId), {players: d.players, deck: d.deck});
+                    // Ambil kartu unik dan kurangi deck
+                    const initialCard = d.deck.pop(); 
+                    d.players.push({id:pId, name:document.getElementById("pName").value || "Guest", cards:[initialCard], ready:false});
+                    await updateDoc(roomRef, {players: d.players, deck: d.deck});
                 }
                 start(rId);
             }
@@ -235,11 +235,24 @@
             onSnapshot(doc(db, "rooms", rId), (s) => { if(s.exists()) render(s.data(), rId); });
         }
 
+        // PERBAIKAN LOGIKA ANTI-KEMBAR
         document.getElementById("btnTarik").onclick = async () => {
             playClick();
-            const s = await getDoc(doc(db, "rooms", curRoom)); let d = s.data();
-            d.players[d.turnIndex].cards.push(d.deck.pop());
-            await updateDoc(doc(db, "rooms", curRoom), { players: d.players, deck: d.deck, turnIndex: (d.turnIndex+1)%d.players.length });
+            const roomRef = doc(db, "rooms", curRoom);
+            const s = await getDoc(roomRef);
+            let d = s.data();
+            
+            if(d.deck.length > 0) {
+                const pulled = d.deck.pop(); // Tarik kartu terakhir
+                const myIdx = d.players.findIndex(p => p.id === pId);
+                d.players[myIdx].cards.push(pulled);
+                // Update deck & giliran secara bersamaan
+                await updateDoc(roomRef, { 
+                    players: d.players, 
+                    deck: d.deck, 
+                    turnIndex: (d.turnIndex + 1) % d.players.length 
+                });
+            }
         };
 
         document.getElementById("btnGas").onclick = async () => {
