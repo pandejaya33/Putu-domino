@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Domino Mystic - Pro Edition</title>
+    <title>Domino Mystic - Final Stable Edition</title>
     <style>
         :root {
             --gold: #ffd700; --deep-gold: #b8860b; --ivory: #ffcc00;
@@ -61,11 +61,10 @@
         .active-turn { background: var(--gold); color: #000; box-shadow: 0 0 15px var(--gold); }
         .kick-btn { color: #ff4444; border: none; background: none; font-weight: bold; cursor: pointer; margin-left: 5px; font-size: 10px; }
 
-        /* Panel Vote */
         #votePanel { 
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
             background: rgba(0,0,0,0.95); border: 3px solid var(--gold); padding: 20px;
-            border-radius: 20px; z-index: 100; display: none; width: 250px;
+            border-radius: 20px; z-index: 100; display: none; width: 250px; text-align: center;
         }
     </style>
 </head>
@@ -98,7 +97,7 @@
 
     <div id="votePanel">
         <h3 style="color:var(--gold); margin-top:0;">Vote Reset?</h3>
-        <p id="voteInfo" style="font-size: 12px;"></p>
+        <p id="voteInfo" style="font-size: 12px; color: white;"></p>
         <button id="btnVoteYes" class="btn-gold">SETUJU</button>
         <button id="btnVoteNo" class="btn-gold" style="background:#444; color:white;">TIDAK</button>
     </div>
@@ -112,7 +111,9 @@
         const db = getFirestore(app);
 
         let curRoom = ""; let pId = Math.random().toString(36).substring(7);
-        let isProcessing = false; // Anti-Klik Ganda
+        let isProcessing = false;
+        let lastGameId = ""; // Penanda untuk deteksi reset kartu
+        
         const dotPatterns = [[], [4], [0, 8], [0, 4, 8], [0, 2, 6, 8], [0, 2, 4, 6, 8], [0, 2, 3, 5, 6, 8]];
         const sfxClick = new Audio('https://www.soundjay.com/button/sounds/button-21.mp3');
         function playClick() { sfxClick.currentTime = 0; sfxClick.play().catch(() => {}); }
@@ -144,20 +145,21 @@
         };
 
         function render(d, rId) {
-            // Kick Logic: Jika ID saya tidak ada di daftar pemain
-            if (!d.players.find(p => p.id === pId)) {
-                alert("Anda telah dikeluarkan dari room.");
-                location.reload(); return;
+            if (!d.players.find(p => p.id === pId)) { alert("Anda telah dikeluarkan."); location.reload(); return; }
+
+            // Logika Deteksi Reset: Bersihkan layar jika gameId berubah
+            if(d.gameId !== lastGameId) {
+                document.getElementById("cardArea").innerHTML = "";
+                lastGameId = d.gameId;
             }
 
             document.getElementById("modeText").innerText = "MODE: " + d.mode.toUpperCase();
             document.getElementById("displayRoomCode").innerText = "KODE ROOM: " + rId;
             
             const me = d.players.find(p => p.id === pId);
-            const isHost = d.players[0].id === pId; // Pembuat room adalah index 0
+            const isHost = d.players[0].id === pId;
             const everyoneReady = d.players.every(p => p.ready);
 
-            // Render Player List + Kick Button
             document.getElementById("playerList").innerHTML = d.players.map((p, i) => `
                 <div class="player-badge ${everyoneReady && i === d.turnIndex ? 'active-turn' : ''}">
                     ${p.name} (${p.cards.length}) ${p.ready?'✓':''}
@@ -165,7 +167,6 @@
                 </div>
             `).join('');
 
-            // Card Rendering
             const area = document.getElementById("cardArea");
             const count = area.querySelectorAll('.card-container').length;
             if(me.cards.length > count) {
@@ -173,7 +174,6 @@
                 area.insertAdjacentHTML('beforeend', `<div class="card-container thrown"><div class="domino-card">${createDots(parseInt(c[0]))}<div class="line"></div>${createDots(parseInt(c[1]))}</div><div class="card-overlay" onpointerdown="initPeel(event, this)"></div></div>`);
             }
 
-            // Vote UI Logic
             const panel = document.getElementById("votePanel");
             const votes = d.resetVotes || {};
             if (d.voteActive) {
@@ -183,7 +183,6 @@
                 panel.style.display = "none";
             }
 
-            // Button Logic
             const maxCards = d.mode === 'spirit' ? 3 : 4;
             const isMyTurn = everyoneReady && (d.players[d.turnIndex].id === pId);
             const btnTarik = document.getElementById("btnTarik");
@@ -196,7 +195,6 @@
             document.getElementById("turnMsg").innerText = !everyoneReady ? "Menunggu pemain GAS..." : (isMyTurn ? "GILIRAN ANDA!" : "Giliran: " + d.players[d.turnIndex].name);
         }
 
-        // FUNGSI KICK
         window.kickPlayer = async (targetId) => {
             if (!confirm("Kick pemain ini?")) return;
             const roomRef = doc(db, "rooms", curRoom);
@@ -215,7 +213,7 @@
             await setDoc(doc(db, "rooms", rId), {
                 mode: document.getElementById("gameMode").value,
                 players: [{id:pId, name:document.getElementById("pName").value || "Host", cards:[deck.pop()], ready:false}],
-                deck: deck, turnIndex: 0, resetVotes: {}, voteActive: false
+                deck: deck, turnIndex: 0, resetVotes: {}, voteActive: false, gameId: Date.now().toString()
             });
             start(rId);
         };
@@ -251,7 +249,7 @@
                     t.update(roomRef, { players: d.players, deck: d.deck, turnIndex: (d.turnIndex+1)%d.players.length });
                 }
             });
-            setTimeout(() => isProcessing = false, 1500);
+            setTimeout(() => isProcessing = false, 1200);
         };
 
         document.getElementById("btnGas").onclick = async () => {
@@ -264,7 +262,6 @@
             });
         };
 
-        // SISTEM VOTE RESET BARU
         document.getElementById("btnResetRequest").onclick = async () => {
             playClick();
             const roomRef = doc(db, "rooms", curRoom);
@@ -274,30 +271,31 @@
         };
 
         document.getElementById("btnVoteYes").onclick = async () => {
-            playClick();
+            if(isProcessing) return; isProcessing = true; playClick();
             const roomRef = doc(db, "rooms", curRoom);
             await runTransaction(db, async (t) => {
                 const s = await t.get(roomRef); let d = s.data();
                 d.resetVotes[pId] = true;
                 if (Object.keys(d.resetVotes).length >= d.players.length) {
-                    // Reset Game Total
                     let deck = []; for(let i=0; i<=6; i++) for(let j=i; j<=6; j++) deck.push(`${i}/${j}`);
                     deck.sort(() => Math.random()-0.5);
                     d.players.forEach(p => { p.cards = [deck.pop()]; p.ready = false; });
-                    t.update(roomRef, { players: d.players, deck: deck, turnIndex: 0, resetVotes: {}, voteActive: false });
-                    document.getElementById("cardArea").innerHTML = "";
+                    // gameId diperbarui agar semua layar otomatis sinkron
+                    t.update(roomRef, { 
+                        players: d.players, deck: deck, turnIndex: 0, 
+                        resetVotes: {}, voteActive: false, gameId: Date.now().toString() 
+                    });
                 } else {
                     t.update(roomRef, { resetVotes: d.resetVotes });
                 }
             });
+            setTimeout(() => isProcessing = false, 1000);
         };
 
         document.getElementById("btnVoteNo").onclick = async () => {
             playClick();
             const roomRef = doc(db, "rooms", curRoom);
-            await runTransaction(db, async (t) => {
-                t.update(roomRef, { voteActive: false, resetVotes: {} });
-            });
+            await runTransaction(db, async (t) => { t.update(roomRef, { voteActive: false, resetVotes: {} }); });
         };
     </script>
 </body>
